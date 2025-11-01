@@ -8,7 +8,7 @@
 subroutine four(w0, z0, dz, tblm, taunew, r, rab, betar)
 !
 ! This routine computes the bidimensional fourier transform of the
-! beta function. It has been implemented for s, p, d-orbitals.
+! beta function. It has been implemented for s, p, d, f-orbitals.
 !
 !   w0(z,g,m)=1/S * \int w(r) \exp{-ig r_\perp} dr_\perp
 !   where w(r) - beta function of the alpha's orbital.
@@ -19,7 +19,8 @@ subroutine four(w0, z0, dz, tblm, taunew, r, rab, betar)
 ! The order of spherical harmonics used:
 !             s ;
 !             p_z, p_{-x}, p_{-y} ;
-!             d_{z^2-1}, d_{-xz}, d_{-yz}, d_{x^2-y^2}, d_{xy}
+!             d_{z^2-1}, d_{-xz}, d_{-yz}, d_{x^2-y^2}, d_{xy} ;
+!             f_{z^3}, f_{-xz^2}, f_{-yz^2}, f_{z(x^2-y^2)}, f_{-xyz}, f_{-x(x^2-3y^2)}, f_{-y(3x^2-y^2)}
 !
 ! input:  tblm   -  array characterizing the orbital.
 !         taunew -  coordinates and radius of the orbital.
@@ -42,25 +43,30 @@ implicit none
              indexr, iz, lb, ir, nmesh, nmeshs, tblm(4)
   real(DP), parameter :: eps=1.d-8
   complex(DP), parameter :: cim=(0.d0, 1.d0)
-  real(DP) :: gn, s1, s2, cs, sn, cs2, sn2, rz, dz1, zr, &
+  real(DP) :: gn, s1, s2, s3, cs, sn, cs2, sn2, cs3, sn3, rz, dz1, zr, &
                    dr, z0, dz,  bessj, taunew(4), r(ndmx),         &
                    rab(ndmx), betar(ndmx)
-  real(DP), allocatable :: x1(:), x2(:), x3(:), x4(:)
-  real(DP), allocatable :: fx1(:), fx2(:), fx3(:), fx4(:), zsl(:)
-  complex(DP) :: w0(nz1, ngper, 5)
-  complex(DP), allocatable :: wadd(:,:)
+  real(DP), allocatable :: x1(:), x2(:), x3(:), x4(:), x5(:), x6(:)
+  real(DP), allocatable :: fx1(:), fx2(:), fx3(:), fx4(:), fx5(:), fx6(:), zsl(:)
+  complex(DP) :: w0(nz1, ngper, 7)
+  complex(DP), allocatable :: wadd(:,:), wadd2(:,:)
 
 
   allocate( x1(0:ndmx) )
   allocate( x2(0:ndmx) )
   allocate( x3(0:ndmx) )
   allocate( x4(0:ndmx) )
+  allocate( x5(0:ndmx) )
+  allocate( x6(0:ndmx) )
   allocate( fx1( nz1 ) )
   allocate( fx2( nz1 ) )
   allocate( fx3( nz1 ) )
   allocate( fx4( nz1 ) )
+  allocate( fx5( nz1 ) )
+  allocate( fx6( nz1 ) )
   allocate( zsl( nz1) )
   allocate( wadd( nz1, ngper ) )
+  allocate( wadd2( nz1, ngper ) )
 
   lb = tblm(3)
   nmesh=indexr(taunew(4)*alat,ndmx,r)
@@ -95,6 +101,13 @@ implicit none
                x2(ir)=betar(ir)*bessj(1,gn*rz)*rz/r(ir)**2
                x3(ir)=betar(ir)*bessj(0,gn*rz)/r(ir)**2
                x4(ir)=betar(ir)*bessj(0,gn*rz)
+            elseif (lb.eq.3) then
+               x1(ir)=betar(ir)*bessj(3,gn*rz)*rz**3/r(ir)**3
+               x2(ir)=betar(ir)*bessj(2,gn*rz)*rz**2/r(ir)**3
+               x3(ir)=betar(ir)*bessj(1,gn*rz)*rz/r(ir)**3
+               x4(ir)=betar(ir)*bessj(0,gn*rz)/r(ir)**3
+               x5(ir)=betar(ir)*bessj(1,gn*rz)*rz/r(ir)
+               x6(ir)=betar(ir)*bessj(0,gn*rz)
             else
                call errore ('four','ls not programmed ',1)
             endif
@@ -142,11 +155,35 @@ implicit none
             fx3(kz)=fx3(kz)+(x3(iz-1)+x3(iz))*0.5d0*zr
             fx4(kz)=fx4(kz)+(x4(iz-1)+x4(iz))*0.5d0*zr
          endif
+         if (lb.eq.3) then
+            fx2(kz)=fx2(kz)+x2(iz)*0.5d0*zr
+            fx3(kz)=fx3(kz)+x3(iz)*0.5d0*zr
+            call simpson(nmeshs-iz+1,x4(iz),rab(iz),fx4(kz))
+            call simpson(nmeshs-iz+1,x5(iz),rab(iz),fx5(kz))
+            call simpson(nmeshs-iz+1,x6(iz),rab(iz),fx6(kz))
+            if(iz.eq.1) then
+               x4(iz-1)=0.d0
+               x5(iz-1)=0.d0
+               x6(iz-1)=0.d0
+            else
+               x4(iz-1)=(betar(iz)-(betar(iz)-   &
+                         betar(iz-1))/dr*zr)/abs(zsl(kz))**3
+               x5(iz-1)=(betar(iz)-(betar(iz)-   &
+                         betar(iz-1))/dr*zr)/abs(zsl(kz))
+               x6(iz-1)=betar(iz)-(betar(iz)-       &
+                         betar(iz-1))/dr*zr
+            endif
+            fx4(kz)=fx4(kz)+(x4(iz-1)+x4(iz))*0.5d0*zr
+            fx5(kz)=fx5(kz)+(x5(iz-1)+x5(iz))*0.5d0*zr
+            fx6(kz)=fx6(kz)+(x6(iz-1)+x6(iz))*0.5d0*zr
+         endif
        else
           fx1(kz)=0.d0
           fx2(kz)=0.d0
           fx3(kz)=0.d0
           fx4(kz)=0.d0
+          fx5(kz)=0.d0
+          fx6(kz)=0.d0
        endif
      enddo
      do igphi=1, ninsh(ign)
@@ -160,6 +197,10 @@ implicit none
         endif
         cs2=cs**2-sn**2
         sn2=2*cs*sn
+        ! For l=3: cos(3φ) = 4cos³φ - 3cosφ, sin(3φ) = 3sinφ - 4sin³φ
+        ! Or using angle addition: cs3 = cs*cs2 - sn*sn2, sn3 = sn*cs2 + cs*sn2
+        cs3=cs*cs2-sn*sn2
+        sn3=sn*cs2+cs*sn2
 
         do kz=1, nz1
             if (lb.eq.0) then
@@ -175,6 +216,16 @@ implicit none
                w0(kz,ig,3)=sn*fx2(kz)
                w0(kz,ig,4)=cs2*fx1(kz)
                wadd(kz,ig)=fx4(kz)
+            elseif (lb.eq.3) then
+               w0(kz,ig,7)=sn3*fx1(kz)
+               w0(kz,ig,5)=sn*fx2(kz)
+               w0(kz,ig,2)=cs*fx3(kz)
+               w0(kz,ig,1)=fx4(kz)
+               w0(kz,ig,3)=sn*fx3(kz)
+               w0(kz,ig,6)=cs3*fx1(kz)
+               w0(kz,ig,4)=cs2*fx2(kz)
+               wadd(kz,ig)=fx5(kz)
+               wadd2(kz,ig)=fx6(kz)
             endif
         enddo
      enddo
@@ -188,6 +239,10 @@ implicit none
   elseif (lb.eq.2) then
      s1=-tpi/2.d0/sarea*sqrt(15.d0/fpi)
      s2=tpi/sarea*sqrt(5.d0/tpi/8.d0)
+  elseif (lb.eq.3) then
+     s1=tpi/4.d0/sarea*sqrt(105.d0/fpi)
+     s2=tpi/2.d0/sarea*sqrt(21.d0/tpi)
+     s3=tpi/sarea*sqrt(7.d0/fpi/8.d0)
   endif
   do ig=1, ngper
     do kz=1, nz1
@@ -203,6 +258,14 @@ implicit none
         w0(kz,ig,1)=3.d0*zsl(kz)**2*s2*w0(kz,ig,1)-s2*wadd(kz,ig)
         w0(kz,ig,3)=-2.d0*cim*s1*zsl(kz)*w0(kz,ig,3)
         w0(kz,ig,4)=s1*w0(kz,ig,4)
+      elseif (lb.eq.3) then
+        w0(kz,ig,7)=s1*w0(kz,ig,7)
+        w0(kz,ig,5)=-3.d0*cim*s1*zsl(kz)*w0(kz,ig,5)
+        w0(kz,ig,2)=3.d0*cim*s2*zsl(kz)**2*w0(kz,ig,2)-cim*s2*wadd(kz,ig)
+        w0(kz,ig,1)=5.d0*zsl(kz)**3*s3*w0(kz,ig,1)-3.d0*zsl(kz)*s3*wadd2(kz,ig)
+        w0(kz,ig,3)=3.d0*cim*s2*zsl(kz)**2*w0(kz,ig,3)-cim*s2*wadd(kz,ig)
+        w0(kz,ig,6)=s1*w0(kz,ig,6)
+        w0(kz,ig,4)=-3.d0*cim*s1*zsl(kz)*w0(kz,ig,4)
       endif
     enddo
   enddo
@@ -211,12 +274,17 @@ implicit none
   deallocate(x2)
   deallocate(x3)
   deallocate(x4)
+  deallocate(x5)
+  deallocate(x6)
   deallocate(fx1)
   deallocate(fx2)
   deallocate(fx3)
   deallocate(fx4)
+  deallocate(fx5)
+  deallocate(fx6)
   deallocate(zsl)
   deallocate(wadd)
+  deallocate(wadd2)
 
   return
 end subroutine four
