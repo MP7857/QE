@@ -1,1 +1,239 @@
-!\n! Copyright (C) 2003 A. Smogunov\n! This file is distributed under the terms of the\n! GNU General Public License. See the file `License'\n! in the root directory of the present distribution,\n! or http://www.gnu.org/copyleft/gpl.txt .\n!\nsubroutine four(w0, z0, dz, tblm, taunew, r, rab, betar)\n!\n! This routine computes the bidimensional fourier transform of the\n! beta function. It has been implemented for s, p, d, f-orbitals.\n!\n!   w0(z,g,m)=1/S * \int w(r) \exp{-ig r_\perp} dr_\perp\n!   where w(r) - beta function of the alpha's orbital.\n!\n!   (see Gradshtein "Tables of integrals")\n! For a fixed l it computes w0 for all m.\n!\n! The order of spherical harmonics used:\n!             s ;\n!             p_z, p_{-x}, p_{-y} ;\n!             d_{z^2-1}, d_{-xz}, d_{-yz}, d_{x^2-y^2}, d_{xy} ;\n!             f_{z^3}, f_{-xz^2}, f_{-yz^2}, f_{z(x^2-y^2)}, f_{xyz},\n!             f_{x(x^2-3y^2)}, f_{y(3x^2-y^2)}\n!\n! input:  tblm   -  array characterizing the orbital.\n!         taunew -  coordinates and radius of the orbital.\n!         z0     -  the initial z\n!         dz     -  the slab width\n!\n! output: w0(z, g, m), where\n!                      z0< z <z0+dz\n!                      g - 2D g-vector\n!\n  USE kinds, ONLY: DP\n  USE constants, ONLY : tpi, fpi\n  USE radial_grids, only : ndmx\n  USE cell_base, ONLY : alat, tpiba\n  USE cond, ONLY : sarea, nz1, ngper, gper, ninsh, gnsh, ngpsh\n\nimplicit none\n\n  integer :: kz, ig, ign, igphi, &\n             indexr, iz, lb, ir, nmesh, nmeshs, tblm(4)\n  real(DP), parameter :: eps=1.d-8\n  complex(DP), parameter :: cim=(0.d0, 1.d0)\n  real(DP) :: gn, s1, s2, s3, cs, sn, cs2, sn2, cs3, sn3, rz, dz1, zr, &\n                   dr, z0, dz,  bessj, taunew(4), r(ndmx),         &\n                   rab(ndmx), betar(ndmx)\n  real(DP), allocatable :: x1(:), x2(:), x3(:), x4(:), x5(:), x6(:)\n  real(DP), allocatable :: fx1(:), fx2(:), fx3(:), fx4(:), fx5(:), fx6(:), zsl(:)\n  complex(DP) :: w0(nz1, ngper, 7)\n  complex(DP), allocatable :: wadd(:,:), wadd2(:,:)\n\n  allocate( x1(0:ndmx) )\n  allocate( x2(0:ndmx) )\n  allocate( x3(0:ndmx) )\n  allocate( x4(0:ndmx) )\n  allocate( x5(0:ndmx) )\n  allocate( x6(0:ndmx) )\n  allocate( fx1( nz1 ) )\n  allocate( fx2( nz1 ) )\n  allocate( fx3( nz1 ) )\n  allocate( fx4( nz1 ) )\n  allocate( fx5( nz1 ) )\n  allocate( fx6( nz1 ) )\n  allocate( zsl( nz1) )\n  allocate( wadd( nz1, ngper ) )\n  allocate( wadd2( nz1, ngper ) )\n\n  lb = tblm(3)\n  nmesh=indexr(taunew(4)*alat,ndmx,r)\n  dz1=dz/nz1\n  zsl(1)=(z0+dz1*0.5d0-taunew(3))*alat\n  do kz = 2, nz1\n    zsl(kz) = zsl(kz-1)+dz1*alat\n  enddo\n\n  ig=0\n  do ign=1, ngpsh\n\n     gn=gnsh(ign)\n     do kz=1, nz1\n       if (abs(zsl(kz))+eps.le.taunew(4)*alat) then\n         iz=indexr(zsl(kz),nmesh,r)\n         if ((nmesh-iz)/2*2.eq.nmesh-iz) then\n            nmeshs=nmesh\n         else\n            nmeshs=nmesh+1\n         endif\n         do ir=iz, nmeshs\n            rz=sqrt(r(ir)**2-zsl(kz)**2)\n            if (lb.eq.0) then\n               x1(ir)=betar(ir)*bessj(0,gn*rz)\n            elseif (lb.eq.1) then\n               x1(ir)=betar(ir)*bessj(1,gn*rz)/r(ir)*rz\n               x2(ir)=betar(ir)*bessj(0,gn*rz)/r(ir)\n            elseif (lb.eq.2) then\n               x1(ir)=betar(ir)*bessj(2,gn*rz)*rz**2/r(ir)**2\n               x2(ir)=betar(ir)*bessj(1,gn*rz)*rz/r(ir)**2\n               x3(ir)=betar(ir)*bessj(0,gn*rz)/r(ir)**2\n               x4(ir)=betar(ir)*bessj(0,gn*rz)\n            elseif (lb.eq.3) then\n               x1(ir)=betar(ir)*bessj(3,gn*rz)*rz**3/r(ir)**3\n               x2(ir)=betar(ir)*bessj(2,gn*rz)*rz**2/r(ir)**3\n               x3(ir)=betar(ir)*bessj(1,gn*rz)*rz/r(ir)**3\n               x4(ir)=betar(ir)*bessj(0,gn*rz)/r(ir)**3\n               x5(ir)=betar(ir)*bessj(1,gn*rz)*rz/r(ir)\n               x6(ir)=betar(ir)*bessj(0,gn*rz)\n            else\n               call errore ('four','ls not programmed ',1)\n            endif\n         enddo\n         call simpson(nmeshs-iz+1,x1(iz),rab(iz),fx1(kz))\n         if (iz.eq.1) then\n            dr=r(iz)\n         else\n            dr=r(iz)-r(iz-1)\n         endif\n         zr=r(iz)-abs(zsl(kz))\n         if (lb.eq.0) then\n            if (iz.eq.1) then\n               x1(iz-1)=betar(iz)-betar(iz)/dr*zr\n            else\n               x1(iz-1)=betar(iz)-(betar(iz)-betar(iz-1))/dr*zr\n            endif\n            fx1(kz)=fx1(kz)+(x1(iz-1)+x1(iz))*0.5d0*zr\n         else\n            fx1(kz)=fx1(kz)+x1(iz)*0.5d0*zr\n            call simpson(nmeshs-iz+1,x2(iz),rab(iz),fx2(kz))\n         endif\n         if (lb.eq.1) then\n            if(iz.eq.1) then\n              x2(iz-1)=0.d0\n            else\n              x2(iz-1)=(betar(iz)-(betar(iz)-   &\n                        betar(iz-1))/dr*zr)/abs(zsl(kz))\n            endif\n            fx2(kz)=fx2(kz)+(x2(iz-1)+x2(iz))*0.5d0*zr\n         endif\n         if (lb.eq.2) then\n            fx2(kz)=fx2(kz)+x2(iz)*0.5d0*zr\n            call simpson(nmeshs-iz+1,x3(iz),rab(iz),fx3(kz))\n            call simpson(nmeshs-iz+1,x4(iz),rab(iz),fx4(kz))\n            if(iz.eq.1) then\n               x3(iz-1)=0.d0\n               x4(iz-1)=0.d0\n            else\n               x3(iz-1)=(betar(iz)-(betar(iz)-   &\n                         betar(iz-1))/dr*zr)/abs(zsl(kz))**2\n               x4(iz-1)=betar(iz)-(betar(iz)-       &\n                         betar(iz-1))/dr*zr\n            endif\n            fx3(kz)=fx3(kz)+(x3(iz-1)+x3(iz))*0.5d0*zr\n            fx4(kz)=fx4(kz)+(x4(iz-1)+x4(iz))*0.5d0*zr\n         endif\n         if (lb.eq.3) then\n            call simpson(nmeshs-iz+1,x3(iz),rab(iz),fx3(kz))\n            call simpson(nmeshs-iz+1,x4(iz),rab(iz),fx4(kz))\n            call simpson(nmeshs-iz+1,x5(iz),rab(iz),fx5(kz))\n            call simpson(nmeshs-iz+1,x6(iz),rab(iz),fx6(kz))\n            if (iz.eq.1) then\n               x3(iz-1)=0.d0\n               x4(iz-1)=0.d0\n               x5(iz-1)=0.d0\n               x6(iz-1)=0.d0\n            else\n               x3(iz-1)=(betar(iz)-(betar(iz)-   &\n                         betar(iz-1))/dr*zr)/abs(zsl(kz))**3\n               x4(iz-1)=betar(iz)-(betar(iz)-       &\n                         betar(iz-1))/dr*zr\n               x5(iz-1)=(betar(iz)-(betar(iz)-   &\n                         betar(iz-1))/dr*zr)/abs(zsl(kz))\n               x6(iz-1)=betar(iz)-(betar(iz)-       &\n                         betar(iz-1))/dr*zr\n            endif\n            fx3(kz)=fx3(kz)+(x3(iz-1)+x3(iz))*0.5d0*zr\n            fx4(kz)=fx4(kz)+(x4(iz-1)+x4(iz))*0.5d0*zr\n            fx5(kz)=fx5(kz)+(x5(iz-1)+x5(iz))*0.5d0*zr\n            fx6(kz)=fx6(kz)+(x6(iz-1)+x6(iz))*0.5d0*zr\n         endif\n       else\n          fx1(kz)=0.d0\n          fx2(kz)=0.d0\n          fx3(kz)=0.d0\n          fx4(kz)=0.d0\n          fx5(kz)=0.d0\n          fx6(kz)=0.d0\n       endif\n     enddo\n     do igphi=1, ninsh(ign)\n        ig=ig+1\n        if (gn.gt.eps) then\n          cs=gper(1,ig)*tpiba/gn\n          sn=gper(2,ig)*tpiba/gn\n        else\n          cs=0.d0\n          sn=0.d0\n        endif\n        cs2=cs**2-sn**2;\n        sn2=2*cs*sn;\n        cs3=cs*cs2-sn*sn2;\n        sn3=sn*cs2+cs*sn2;\n\n        do kz=1, nz1\n            if (lb.eq.0) then\n               w0(kz,ig,1)=fx1(kz)\n            elseif (lb.eq.1) then\n               w0(kz,ig,2)=cs*fx1(kz)\n               w0(kz,ig,1)=fx2(kz)\n               w0(kz,ig,3)=sn*fx1(kz)\n            elseif (lb.eq.2) then\n               w0(kz,ig,5)=sn2*fx1(kz)\n               w0(kz,ig,2)=cs*fx2(kz)\n               w0(kz,ig,1)=fx3(kz)\n               w0(kz,ig,3)=sn*fx2(kz)\n               w0(kz,ig,4)=cs2*fx1(kz)\n               wadd(kz,ig)=fx4(kz)\n            elseif (lb.eq.3) then\n               w0(kz,ig,7)=sn3*fx1(kz)\n               w0(kz,ig,5)=sn2*zsl(kz)*fx3(kz)\n               w0(kz,ig,2)=cs*zsl(kz)**2*fx4(kz)-cs*fx6(kz)\n               w0(kz,ig,1)=fx5(kz)\n               w0(kz,ig,3)=sn*zsl(kz)**2*fx4(kz)-sn*fx6(kz)\n               w0(kz,ig,6)=cs3*fx1(kz)\n               w0(kz,ig,4)=cs2*zsl(kz)*fx3(kz)\n               wadd(kz,ig)=fx5(kz)\n               wadd2(kz,ig)=fx6(kz)\n            endif\n        enddo\n     enddo\n  enddo\n\n  if (lb.eq.0) then\n     s1=tpi/sarea/sqrt(fpi)\n  elseif (lb.eq.1) then\n     s1=tpi/sarea*sqrt(3.d0/fpi)\n  elseif (lb.eq.2) then\n     s1=-tpi/2.d0/sarea*sqrt(15.d0/fpi)\n     s2=tpi/sarea*sqrt(5.d0/tpi/8.d0)\n  elseif (lb.eq.3) then\n     s1=tpi/4.d0/sarea*sqrt(105.d0/fpi)\n     s2=tpi/2.d0/sarea*sqrt(21.d0/tpi)\n     s3=tpi/sarea*sqrt(7.d0/fpi/8.d0)\n  endif\n  do ig=1, ngper\n    do kz=1, nz1\n      if (lb.eq.0) then\n        w0(kz,ig,1)=s1*w0(kz,ig,1)\n      elseif (lb.eq.1) then\n        w0(kz,ig,2)=cim*s1*w0(kz,ig,2)\n        w0(kz,ig,1)=s1*zsl(kz)*w0(kz,ig,1)\n        w0(kz,ig,3)=cim*s1*w0(kz,ig,3)\n      elseif (lb.eq.2) then\n        w0(kz,ig,5)=s1*w0(kz,ig,5)\n        w0(kz,ig,2)=-2.d0*cim*s1*zsl(kz)*w0(kz,ig,2)\n        w0(kz,ig,1)=3.d0*zsl(kz)**2*s2*w0(kz,ig,1)-s2*wadd(kz,ig)\n        w0(kz,ig,3)=-2.d0*cim*s1*zsl(kz)*w0(kz,ig,3)\n        w0(kz,ig,4)=s1*w0(kz,ig,4)\n      elseif (lb.eq.3) then\n        w0(kz,ig,7)=s1*w0(kz,ig,7)\n        w0(kz,ig,5)=-3.d0*cim*s1*zsl(kz)*w0(kz,ig,5)\n        w0(kz,ig,2)=3.d0*cim*s2*zsl(kz)**2*w0(kz,ig,2)-cim*s2*wadd(kz,ig)\n        w0(kz,ig,1)=5.d0*zsl(kz)**3*s3*w0(kz,ig,1)-3.d0*zsl(kz)*s3*wadd2(kz,ig)\n        w0(kz,ig,3)=3.d0*cim*s2*zsl(kz)**2*w0(kz,ig,3)-cim*s2*wadd(kz,ig)\n        w0(kz,ig,6)=s1*w0(kz,ig,6)\n        w0(kz,ig,4)=-3.d0*cim*s1*zsl(kz)*w0(kz,ig,4)\n      endif\n    enddo\n  enddo\n\n  deallocate(x1)\n  deallocate(x2)\n  deallocate(x3)\n  deallocate(x4)\n  deallocate(x5)\n  deallocate(x6)\n  deallocate(fx1)\n  deallocate(fx2)\n  deallocate(fx3)\n  deallocate(fx4)\n  deallocate(fx5)\n  deallocate(fx6)\n  deallocate(zsl)\n  deallocate(wadd)\n  deallocate(wadd2)\n\n  return\nend subroutine four\n\nfunction indexr(zz, ndim, r)\n  USE kinds, only : DP\n  implicit none\n\n  integer :: iz, ndim, indexr\n  real(DP) :: zz, r(ndim)\n!\n!     abs(zz)<r(indexr)\n!\n  iz = 1\n  do while(r(iz).le.abs(zz)+1.d-10)\n    iz=iz+1\n  enddo\n  indexr=iz\n  return\nend function indexr\n
+!
+! Copyright (C) 2003 A. Smogunov
+! This file is distributed under the terms of the
+! GNU General Public License. See the file `License'
+! in the root directory of the present distribution,
+! or http://www.gnu.org/copyleft/gpl.txt .
+!
+subroutine four(w0, z0, dz, tblm, taunew, r, rab, betar)
+!
+! This routine computes the bidimensional fourier transform of the
+! beta function. It has been implemented for s, p, d-orbitals.
+!
+!   w0(z,g,m)=1/S * \int w(r) \exp{-ig r_\perp} dr_\perp
+!   where w(r) - beta function of the alpha's orbital.
+!
+!   (see Gradshtein "Tables of integrals")
+! For a fixed l it computes w0 for all m.
+!
+! The order of spherical harmonics used:
+!             s ;
+!             p_z, p_{-x}, p_{-y} ;
+!             d_{z^2-1}, d_{-xz}, d_{-yz}, d_{x^2-y^2}, d_{xy}
+!
+! input:  tblm   -  array characterizing the orbital.
+!         taunew -  coordinates and radius of the orbital.
+!         z0     -  the initial z
+!         dz     -  the slab width
+!
+! output: w0(z, g, m), where
+!                      z0< z <z0+dz
+!                      g - 2D g-vector
+!
+  USE kinds, ONLY: DP
+  USE constants, ONLY : tpi, fpi
+  USE radial_grids, only : ndmx
+  USE cell_base, ONLY : alat, tpiba
+  USE cond, ONLY : sarea, nz1, ngper, gper, ninsh, gnsh, ngpsh
+
+implicit none
+
+  integer :: kz, ig, ign, igphi, &
+             indexr, iz, lb, ir, nmesh, nmeshs, tblm(4)
+  real(DP), parameter :: eps=1.d-8
+  complex(DP), parameter :: cim=(0.d0, 1.d0)
+  real(DP) :: gn, s1, s2, cs, sn, cs2, sn2, rz, dz1, zr, &
+                   dr, z0, dz,  bessj, taunew(4), r(ndmx),         &
+                   rab(ndmx), betar(ndmx)
+  real(DP), allocatable :: x1(:), x2(:), x3(:), x4(:)
+  real(DP), allocatable :: fx1(:), fx2(:), fx3(:), fx4(:), zsl(:)
+  complex(DP) :: w0(nz1, ngper, 5)
+  complex(DP), allocatable :: wadd(:,:)
+
+
+  allocate( x1(0:ndmx) )
+  allocate( x2(0:ndmx) )
+  allocate( x3(0:ndmx) )
+  allocate( x4(0:ndmx) )
+  allocate( fx1( nz1 ) )
+  allocate( fx2( nz1 ) )
+  allocate( fx3( nz1 ) )
+  allocate( fx4( nz1 ) )
+  allocate( zsl( nz1) )
+  allocate( wadd( nz1, ngper ) )
+
+  lb = tblm(3)
+  nmesh=indexr(taunew(4)*alat,ndmx,r)
+  dz1=dz/nz1
+  zsl(1)=(z0+dz1*0.5d0-taunew(3))*alat
+  do kz = 2, nz1
+    zsl(kz) = zsl(kz-1)+dz1*alat
+  enddo
+
+
+  ig=0
+  do ign=1, ngpsh
+
+     gn=gnsh(ign)
+     do kz=1, nz1
+       if (abs(zsl(kz))+eps.le.taunew(4)*alat) then
+         iz=indexr(zsl(kz),nmesh,r)
+         if ((nmesh-iz)/2*2.eq.nmesh-iz) then
+            nmeshs=nmesh
+         else
+            nmeshs=nmesh+1
+         endif
+         do ir=iz, nmeshs
+            rz=sqrt(r(ir)**2-zsl(kz)**2)
+            if (lb.eq.0) then
+               x1(ir)=betar(ir)*bessj(0,gn*rz)
+            elseif (lb.eq.1) then
+               x1(ir)=betar(ir)*bessj(1,gn*rz)/r(ir)*rz
+               x2(ir)=betar(ir)*bessj(0,gn*rz)/r(ir)
+            elseif (lb.eq.2) then
+               x1(ir)=betar(ir)*bessj(2,gn*rz)*rz**2/r(ir)**2
+               x2(ir)=betar(ir)*bessj(1,gn*rz)*rz/r(ir)**2
+               x3(ir)=betar(ir)*bessj(0,gn*rz)/r(ir)**2
+               x4(ir)=betar(ir)*bessj(0,gn*rz)
+            else
+               call errore ('four','ls not programmed ',1)
+            endif
+         enddo
+         call simpson(nmeshs-iz+1,x1(iz),rab(iz),fx1(kz))
+         if (iz.eq.1) then
+            dr=r(iz)
+         else
+            dr=r(iz)-r(iz-1)
+         endif
+         zr=r(iz)-abs(zsl(kz))
+         if (lb.eq.0) then
+            if (iz.eq.1) then
+               x1(iz-1)=betar(iz)-betar(iz)/dr*zr
+            else
+               x1(iz-1)=betar(iz)-(betar(iz)-betar(iz-1))/dr*zr
+            endif
+            fx1(kz)=fx1(kz)+(x1(iz-1)+x1(iz))*0.5d0*zr
+         else
+            fx1(kz)=fx1(kz)+x1(iz)*0.5d0*zr
+            call simpson(nmeshs-iz+1,x2(iz),rab(iz),fx2(kz))
+         endif
+         if (lb.eq.1) then
+            if(iz.eq.1) then
+              x2(iz-1)=0.d0
+            else
+              x2(iz-1)=(betar(iz)-(betar(iz)-   &
+                        betar(iz-1))/dr*zr)/abs(zsl(kz))
+            endif
+            fx2(kz)=fx2(kz)+(x2(iz-1)+x2(iz))*0.5d0*zr
+         endif
+         if (lb.eq.2) then
+            fx2(kz)=fx2(kz)+x2(iz)*0.5d0*zr
+            call simpson(nmeshs-iz+1,x3(iz),rab(iz),fx3(kz))
+            call simpson(nmeshs-iz+1,x4(iz),rab(iz),fx4(kz))
+            if(iz.eq.1) then
+               x3(iz-1)=0.d0
+               x4(iz-1)=0.d0
+            else
+               x3(iz-1)=(betar(iz)-(betar(iz)-   &
+                         betar(iz-1))/dr*zr)/abs(zsl(kz))**2
+               x4(iz-1)=betar(iz)-(betar(iz)-       &
+                         betar(iz-1))/dr*zr
+            endif
+            fx3(kz)=fx3(kz)+(x3(iz-1)+x3(iz))*0.5d0*zr
+            fx4(kz)=fx4(kz)+(x4(iz-1)+x4(iz))*0.5d0*zr
+         endif
+       else
+          fx1(kz)=0.d0
+          fx2(kz)=0.d0
+          fx3(kz)=0.d0
+          fx4(kz)=0.d0
+       endif
+     enddo
+     do igphi=1, ninsh(ign)
+        ig=ig+1
+        if (gn.gt.eps) then
+          cs=gper(1,ig)*tpiba/gn
+          sn=gper(2,ig)*tpiba/gn
+        else
+          cs=0.d0
+          sn=0.d0
+        endif
+        cs2=cs**2-sn**2
+        sn2=2*cs*sn
+
+        do kz=1, nz1
+            if (lb.eq.0) then
+               w0(kz,ig,1)=fx1(kz)
+            elseif (lb.eq.1) then
+               w0(kz,ig,2)=cs*fx1(kz)
+               w0(kz,ig,1)=fx2(kz)
+               w0(kz,ig,3)=sn*fx1(kz)
+            elseif (lb.eq.2) then
+               w0(kz,ig,5)=sn2*fx1(kz)
+               w0(kz,ig,2)=cs*fx2(kz)
+               w0(kz,ig,1)=fx3(kz)
+               w0(kz,ig,3)=sn*fx2(kz)
+               w0(kz,ig,4)=cs2*fx1(kz)
+               wadd(kz,ig)=fx4(kz)
+            endif
+        enddo
+     enddo
+
+  enddo
+
+  if (lb.eq.0) then
+     s1=tpi/sarea/sqrt(fpi)
+  elseif (lb.eq.1) then
+     s1=tpi/sarea*sqrt(3.d0/fpi)
+  elseif (lb.eq.2) then
+     s1=-tpi/2.d0/sarea*sqrt(15.d0/fpi)
+     s2=tpi/sarea*sqrt(5.d0/tpi/8.d0)
+  endif
+  do ig=1, ngper
+    do kz=1, nz1
+      if (lb.eq.0) then
+        w0(kz,ig,1)=s1*w0(kz,ig,1)
+      elseif (lb.eq.1) then
+        w0(kz,ig,2)=cim*s1*w0(kz,ig,2)
+        w0(kz,ig,1)=s1*zsl(kz)*w0(kz,ig,1)
+        w0(kz,ig,3)=cim*s1*w0(kz,ig,3)
+      elseif (lb.eq.2) then
+        w0(kz,ig,5)=s1*w0(kz,ig,5)
+        w0(kz,ig,2)=-2.d0*cim*s1*zsl(kz)*w0(kz,ig,2)
+        w0(kz,ig,1)=3.d0*zsl(kz)**2*s2*w0(kz,ig,1)-s2*wadd(kz,ig)
+        w0(kz,ig,3)=-2.d0*cim*s1*zsl(kz)*w0(kz,ig,3)
+        w0(kz,ig,4)=s1*w0(kz,ig,4)
+      endif
+    enddo
+  enddo
+
+  deallocate(x1)
+  deallocate(x2)
+  deallocate(x3)
+  deallocate(x4)
+  deallocate(fx1)
+  deallocate(fx2)
+  deallocate(fx3)
+  deallocate(fx4)
+  deallocate(zsl)
+  deallocate(wadd)
+
+  return
+end subroutine four
+
+function indexr(zz, ndim, r)
+  USE kinds, only : DP
+  implicit none
+
+  integer :: iz, ndim, indexr
+  real(DP) :: zz, r(ndim)
+!
+!     abs(zz)<r(indexr)
+!
+  iz = 1
+  do while(r(iz).le.abs(zz)+1.d-10)
+    iz=iz+1
+  enddo
+  indexr=iz
+  return
+end function indexr
