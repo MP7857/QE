@@ -156,7 +156,10 @@ implicit none
             fx4(kz)=fx4(kz)+(x4(iz-1)+x4(iz))*0.5d0*zr
          endif
          if (lb.eq.3) then
+            fx1(kz)=fx1(kz)+x1(iz)*0.5d0*zr
+            call simpson(nmeshs-iz+1,x2(iz),rab(iz),fx2(kz))
             fx2(kz)=fx2(kz)+x2(iz)*0.5d0*zr
+            call simpson(nmeshs-iz+1,x3(iz),rab(iz),fx3(kz))
             fx3(kz)=fx3(kz)+x3(iz)*0.5d0*zr
             call simpson(nmeshs-iz+1,x4(iz),rab(iz),fx4(kz))
             call simpson(nmeshs-iz+1,x5(iz),rab(iz),fx5(kz))
