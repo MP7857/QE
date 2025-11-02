@@ -79,7 +79,7 @@ subroutine scatter_forw(nrz, nrzp, z, psiper, zk, norb, tblm, cros, &
   call divide(intra_pool_comm,nrz,kin,kfin)
 
   ALLOCATE( psigper( ngper*npol, n2d ) )
-  ALLOCATE( w0( nz1, ngper, 5 ) )
+  ALLOCATE( w0( nz1, ngper, 7 ) )
   ALLOCATE( zkk( n2d ) )
   ALLOCATE( ezk( n2d ) )
   ALLOCATE( emzk( n2d ) )
