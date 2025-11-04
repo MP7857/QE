@@ -2,30 +2,37 @@
 
 PyCBS is a Python package that provides Complex Band Structure (CBS) calculation functionality, serving as a Python-based replacement for the PWCOND Fortran code in Quantum ESPRESSO. It reads simulation data files from Quantum ESPRESSO and calculates the complex band structure without performing transmission calculations.
 
-## ⚠️ Current Status - Phase 1/2 Integration ADVANCING
+## ⚠️ Current Status - Phase 2 CONTINUING
 
-**IMPORTANT**: Significant progress has been made on physics-based implementation!
+**IMPORTANT**: Significant progress on physics-based implementation! Local potential module framework added.
 
-**Phase 1 & 2 Progress - Wavefunction Reader & Hamiltonian:**
+**Phase 1 & 2 Progress - Wavefunction Reader, Hamiltonian & Potential:**
 - ✅ **Completed**: Basic wavefunction file reader (`wfc_reader.py`)
 - ✅ File discovery and metadata extraction
 - ✅ Basic binary header parsing
 - ✅ 2D G-vector grid construction (`GVectorGrid` class - following init_gper.f90)
-- ✅ **NEW**: Kinetic energy matrix construction (`HamiltonianBuilder` class)
-- ✅ **NEW**: Free-electron Hamiltonian in 2D plane wave basis
-- ✅ **NEW**: CBS matrix formulation for generalized eigenvalue problem
-- ✅ **NEW**: Integration with CBS calculator (uses HamiltonianBuilder when G-vector grid available)
-- ⏳ **In Progress**: Local/non-local pseudopotential integration
-- ⏳ **In Progress**: Full coefficient reading from binary files
+- ✅ Kinetic energy matrix construction (`HamiltonianBuilder` class)
+- ✅ Free-electron Hamiltonian in 2D plane wave basis
+- ✅ CBS matrix formulation for generalized eigenvalue problem
+- ✅ Integration with CBS calculator (uses HamiltonianBuilder when G-vector grid available)
+- ✅ **NEW**: Local potential module framework (`potential.py`)
+- ✅ **NEW**: `LocalPotentialReader` and `PseudopotentialManager` classes
+- ⏳ **In Progress**: Binary charge density file reader
+- ⏳ **In Progress**: 3D → 2D potential projection algorithm
+- ⏳ **In Progress**: UPF pseudopotential file parser
+- ⏳ **Next**: Non-local pseudopotential projections
+- ⏳ **Next**: Full coefficient reading from binary files
 
 **What works NOW:**
 - Free-electron complex band structure calculations with proper plane wave basis
 - Physics-based kinetic energy matrices T = (G+k)²/(2m)
 - Proper generalized eigenvalue problem formulation
 - Automatic fallback to toy model when G-vector grid not available
+- Local potential integration framework (placeholder implementations)
 
 **For accurate results with pseudopotentials**, the following still needs implementation:
-- Local pseudopotential from QE charge density
+- Binary charge density file reading and potential construction
+- UPF pseudopotential file parsing
 - Non-local pseudopotential projections  
 - Complete wavefunction coefficient reading
 - Validation against PWCOND results
@@ -36,15 +43,16 @@ PyCBS is a Python package that provides Complex Band Structure (CBS) calculation
 - ✅ Understanding output formats
 - ✅ Exploring QE wavefunction file structure
 - ✅ Constructing 2D G-vector grids (following PWCOND init_gper.f90)
-- ✅ **NEW**: Building kinetic energy and Hamiltonian matrices
-- ✅ **NEW**: Understanding CBS generalized eigenvalue problem
-- ✅ **NEW**: Free-electron CBS calculations
-- ❌ Production calculations with pseudopotentials (still needs PP integration)
+- ✅ Building kinetic energy and Hamiltonian matrices
+- ✅ Understanding CBS generalized eigenvalue problem
+- ✅ Free-electron CBS calculations
+- ✅ **NEW**: Understanding local potential integration framework
+- ❌ Production calculations with pseudopotentials (Phase 2 continuation needed)
 - ❌ Publication-quality data
 
 For production use with accurate physics and pseudopotentials, please use the original PWCOND Fortran code.
 
-See `ROADMAP.md` for detailed implementation status, `examples/example_wfc_reader.py` for G-vector functionality, `examples/example_hamiltonian.py` for Hamiltonian construction, and **NEW** `examples/example_integrated_cbs.py` for integrated physics-based CBS calculation.
+See `ROADMAP.md` for detailed implementation status, `examples/example_wfc_reader.py` for G-vector functionality, `examples/example_hamiltonian.py` for Hamiltonian construction, `examples/example_integrated_cbs.py` for integrated physics-based CBS calculation, and **NEW** `examples/example_potential.py` for local potential framework.
 
 ## Features
 

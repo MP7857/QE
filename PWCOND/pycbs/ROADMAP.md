@@ -1,12 +1,12 @@
 # PyCBS Implementation Roadmap
 
-## Current Status - Phase 1/2 Integration ADVANCING
+## Current Status - Phase 2 CONTINUING
 
-**Major milestone reached!** Phase 1 and Phase 2 are now integrated with the CBS calculator.
+**Major milestones reached!** Phase 1 and Phase 2 are now integrated with the CBS calculator. Local pseudopotential module framework added.
 
 ✅ **Phase 1: Mostly Complete** - Wavefunction reader and G-vector grid  
-✅ **Phase 2: Core Complete** - Hamiltonian construction and CBS integration  
-⏳ **Phase 2: In Progress** - Pseudopotential integration  
+✅ **Phase 2: Core Complete + Framework Added** - Hamiltonian construction, CBS integration, and potential module structure  
+⏳ **Phase 2: In Progress** - Pseudopotential implementation (binary readers, potential projection)  
 ❌ **Phase 3: Not Started** - Full validation
 
 **What works NOW:**
@@ -14,19 +14,24 @@
 - Physics-based kinetic energy matrices
 - Proper generalized eigenvalue problem formulation
 - Automatic integration with CBS calculator
+- Local potential integration framework
 
 **Latest Progress (Current commit):**
-- ✅ Integrated `HamiltonianBuilder` with `ComplexBandStructure` class
-- ✅ CBS calculator automatically uses physics-based matrices when G-vector grid available
-- ✅ Graceful fallback to toy model with warnings when no G-vector grid
-- ✅ New example `example_integrated_cbs.py` demonstrating full workflow
-- ✅ All 34 tests passing
+- ✅ Created `potential.py` module with class structures
+- ✅ `LocalPotentialReader` - Framework for reading charge density and constructing V_loc
+- ✅ `PseudopotentialManager` - Framework for managing PP data
+- ✅ Integration function `integrate_local_potential()`
+- ✅ 9 new tests (43 total, all passing)
+- ✅ Example `example_potential.py` demonstrating framework
+- ✅ Updated package exports
 
 **Next Steps:**
-1. Local pseudopotential from QE charge density
-2. Non-local pseudopotential projections
-3. Complete wavefunction coefficient reading
-4. Validation against PWCOND results
+1. Binary charge density file reader (QE format)
+2. 3D → 2D potential projection algorithm
+3. UPF pseudopotential file parser
+4. Non-local pseudopotential projections
+5. Complete wavefunction coefficient reading
+6. Validation against PWCOND results
 
 ## What's Implemented
 
@@ -167,16 +172,20 @@ To make PyCBS production-ready, implement in this order:
    - Tests: 14/14 passing
    - Example: `examples/example_wfc_reader.py`
 
-✅ **1.5/2 Hamiltonian construction** (CORE COMPLETE - Phase 1.5/2)
+✅ **1.5/2 Hamiltonian construction** (CORE COMPLETE + FRAMEWORK ADDED - Phase 1.5/2)
    - ✅ `hamiltonian.py` module created
    - ✅ `HamiltonianBuilder` class - Kinetic energy matrix construction
    - ✅ Free-electron Hamiltonian in 2D plane wave basis
    - ✅ CBS matrix formulation (A, B for generalized eigenvalue problem)
-   - ✅ **NEW: Integration with CBS calculator (compbs.py)**
-   - ✅ **NEW: Automatic use when G-vector grid available**
-   - ✅ **NEW: Graceful fallback to toy model with warnings**
-   - Tests: 8/8 passing (34 total)
-   - Examples: `examples/example_hamiltonian.py`, `examples/example_integrated_cbs.py`
+   - ✅ Integration with CBS calculator (compbs.py)
+   - ✅ Automatic use when G-vector grid available
+   - ✅ Graceful fallback to toy model with warnings
+   - ✅ **NEW: `potential.py` module created**
+   - ✅ **NEW: `LocalPotentialReader` class framework**
+   - ✅ **NEW: `PseudopotentialManager` class framework**
+   - ✅ **NEW: `integrate_local_potential()` function**
+   - Tests: 17/17 passing (43 total)
+   - Examples: `examples/example_hamiltonian.py`, `examples/example_integrated_cbs.py`, **NEW** `examples/example_potential.py`
 
 ⏳ **Next steps in Phase 1:**
    - Complete binary format parser for all QE versions

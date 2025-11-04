@@ -14,6 +14,11 @@ from .reader import QEDataReader
 from .compbs import ComplexBandStructure
 from .wfc_reader import WavefunctionReader, read_wavefunction_metadata, GVectorGrid
 from .hamiltonian import HamiltonianBuilder, build_test_hamiltonian
+from .potential import (
+    LocalPotentialReader,
+    PseudopotentialManager,
+    integrate_local_potential
+)
 
 __all__ = [
     "CBSCalculator",
@@ -25,4 +30,7 @@ __all__ = [
     "GVectorGrid",
     "HamiltonianBuilder",
     "build_test_hamiltonian",
+    "LocalPotentialReader",
+    "PseudopotentialManager",
+    "integrate_local_potential",
 ]
