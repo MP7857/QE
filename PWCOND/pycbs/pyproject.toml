@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pycbs"
+version = "0.1.0"
+description = "Python package for Complex Band Structure (CBS) calculations - a Python replacement for PWCOND"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "GPL-2.0-or-later"}
+authors = [
+    {name = "QE Developers"}
+]
+keywords = ["quantum-espresso", "complex-band-structure", "pwcond", "dft"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+
+dependencies = [
+    "numpy>=1.20.0",
+    "scipy>=1.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=3.0",
+]
+
+[project.scripts]
+pycbs = "pycbs.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/MP7857/QE"
+Repository = "https://github.com/MP7857/QE"
+
+[tool.setuptools.packages.find]
+include = ["pycbs*"]
+exclude = ["tests*"]
