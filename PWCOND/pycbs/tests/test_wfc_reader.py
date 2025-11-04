@@ -8,7 +8,59 @@ from pathlib import Path
 import tempfile
 import struct
 
-from pycbs.wfc_reader import WavefunctionReader, read_wavefunction_metadata
+from pycbs.wfc_reader import WavefunctionReader, read_wavefunction_metadata, GVectorGrid
+
+
+class TestGVectorGrid:
+    """Tests for G-vector grid construction."""
+    
+    def test_initialization(self):
+        """Test G-vector grid initialization."""
+        bg = np.eye(3) * 2 * np.pi  # Simple cubic
+        kpoint = np.array([0.0, 0.0])
+        ecut2d = 10.0  # Ry
+        
+        grid = GVectorGrid(bg, kpoint, ecut2d, nrx=10, nry=10)
+        
+        assert grid.ngper > 0
+        assert grid.ngpsh > 0
+        assert grid.gper is not None
+        assert grid.gper.shape[0] == 2
+        assert grid.gper.shape[1] == grid.ngper
+        
+    def test_gamma_point(self):
+        """Test G-vector grid at Gamma point."""
+        bg = np.eye(3) * 2 * np.pi
+        kpoint = np.array([0.0, 0.0])
+        ecut2d = 5.0
+        
+        grid = GVectorGrid(bg, kpoint, ecut2d, nrx=8, nry=8)
+        
+        # At gamma, first G-vector should be (0,0)
+        assert grid.gper[0, 0] == 0
+        assert grid.gper[1, 0] == 0
+        
+    def test_nonzero_kpoint(self):
+        """Test G-vector grid at non-zero k-point."""
+        bg = np.eye(3) * 2 * np.pi
+        kpoint = np.array([0.25, 0.25])
+        ecut2d = 5.0
+        
+        grid = GVectorGrid(bg, kpoint, ecut2d, nrx=8, nry=8)
+        
+        assert grid.ngper > 0
+        # Grid depends on k-point
+        
+    def test_ecut_increases_gvecs(self):
+        """Test that higher cutoff gives more G-vectors."""
+        bg = np.eye(3) * 2 * np.pi
+        kpoint = np.array([0.0, 0.0])
+        
+        # Use larger cutoffs to ensure multiple G-vectors
+        grid1 = GVectorGrid(bg, kpoint, ecut2d=50.0, nrx=10, nry=10)
+        grid2 = GVectorGrid(bg, kpoint, ecut2d=200.0, nrx=10, nry=10)
+        
+        assert grid2.ngper >= grid1.ngper  # Higher cutoff should have at least as many
 
 
 class TestWavefunctionReader:

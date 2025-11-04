@@ -135,20 +135,21 @@ To make PyCBS production-ready, implement in this order:
 
 ### Phase 1: Core Physics (Essential) - **IN PROGRESS**
 
-✅ **1. Wavefunction reader** (COMPLETED)
+✅ **1. Wavefunction reader** (PARTIALLY COMPLETED)
    - `wfc_reader.py` module created
    - File discovery implemented
    - Basic header reading working
-   - Tests: 10/10 passing
+   - **NEW**: `GVectorGrid` class - 2D G-vector construction (following init_gper.f90)
+   - Tests: 14/14 passing
    - Example: `examples/example_wfc_reader.py`
 
 ⏳ **Next steps in Phase 1:**
    - Complete binary format parser for all QE versions
-   - Read G-vector indices from gvectors.dat  
-   - Read plane wave coefficients for all bands
+   - Read plane wave coefficients for all bands (from wfc files)
    - Handle gamma_only, spin-polarized, non-collinear cases
+   - Integrate with compbs.py for matrix construction
 
-2. **Kinetic energy matrix** - T = (k + G)²/(2m) in plane wave basis
+2. **Kinetic energy matrix** - T = (k + G)²/(2m) in plane wave basis (ready to implement with G-vectors)
 3. **Local potential** - Read and interpolate from charge density
 4. **Problem dimensions** - Calculate from system geometry
 

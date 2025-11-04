@@ -7,10 +7,11 @@ PyCBS is a Python package that provides Complex Band Structure (CBS) calculation
 **IMPORTANT**: The current implementation uses a **simplified tight-binding model** for demonstration purposes. It does NOT yet read the actual Hamiltonian and potential from QE wavefunction data. 
 
 **Phase 1 Progress - Wavefunction Reader:**
-- ✅ **Started**: Basic wavefunction file reader (`wfc_reader.py`)
+- ✅ **Completed**: Basic wavefunction file reader (`wfc_reader.py`)
 - ✅ File discovery and metadata extraction
 - ✅ Basic binary header parsing
-- ⏳ **In Progress**: Full coefficient reading, G-vector handling
+- ✅ **NEW**: 2D G-vector grid construction (`GVectorGrid` class)
+- ⏳ **In Progress**: Full coefficient reading, integration with CBS
 
 **For accurate results**, the following still needs to be implemented:
 - Complete QE wavefunction data reading from binary files  
@@ -21,13 +22,14 @@ PyCBS is a Python package that provides Complex Band Structure (CBS) calculation
 - ✅ Learning the CBS calculation workflow
 - ✅ Testing the package structure and API
 - ✅ Understanding output formats
-- ✅ **NEW**: Exploring QE wavefunction file structure
+- ✅ Exploring QE wavefunction file structure
+- ✅ **NEW**: Constructing 2D G-vector grids (following PWCOND init_gper.f90)
 - ❌ Production calculations requiring accurate results
 - ❌ Publication-quality data
 
 For production use with accurate physics, please use the original PWCOND Fortran code.
 
-See `ROADMAP.md` for detailed implementation status and `examples/example_wfc_reader.py` for the new wavefunction reader.
+See `ROADMAP.md` for detailed implementation status and `examples/example_wfc_reader.py` for the new G-vector functionality.
 
 ## Features
 
