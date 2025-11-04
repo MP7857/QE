@@ -80,7 +80,7 @@ class QEDataReader:
             # Try old XML format
             old_xml = self.outdir / f"{self.prefix}.xml"
             if old_xml.exists():
-                self._read_old_xml(old_xml)
+                self._raise_old_xml_not_supported(old_xml)
             else:
                 raise FileNotFoundError(
                     f"Could not find QE data file: {self.data_file_schema} or {old_xml}"
@@ -187,10 +187,12 @@ class QEDataReader:
         # Calculate reciprocal lattice vectors
         self._calculate_reciprocal_lattice()
         
-    def _read_old_xml(self, xml_file):
-        """Read data from old XML format (QE < 6.5)."""
-        # Simplified reader for old format
-        # This is a placeholder - full implementation would parse the old XML
+    def _raise_old_xml_not_supported(self, xml_file):
+        """
+        Raise error for unsupported old XML format.
+        
+        Old XML format (QE < 6.5) is not yet supported.
+        """
         raise NotImplementedError(
             "Old XML format reading not yet implemented. "
             "Please use QE version 6.5 or later."

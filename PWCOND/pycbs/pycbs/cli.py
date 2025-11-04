@@ -118,7 +118,7 @@ Examples:
     # Validate inputs
     if not Path(args.outdir).exists():
         print(f"Error: Directory {args.outdir} does not exist", file=sys.stderr)
-        return 1
+        return 2  # Exit code 2 for missing files/directories
     
     try:
         # Initialize calculator
@@ -165,11 +165,17 @@ Examples:
         
         return 0
         
+    except FileNotFoundError as e:
+        print(f"Error: Required file not found - {e}", file=sys.stderr)
+        return 2  # Exit code 2 for missing files
+    except ValueError as e:
+        print(f"Error: Invalid input - {e}", file=sys.stderr)
+        return 3  # Exit code 3 for invalid input
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         import traceback
         traceback.print_exc()
-        return 1
+        return 1  # Exit code 1 for general errors
 
 
 if __name__ == '__main__':

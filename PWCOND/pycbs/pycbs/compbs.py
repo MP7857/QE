@@ -95,7 +95,20 @@ class ComplexBandStructure:
         }
         
     def _setup_problem_dimensions(self, kpoint: np.ndarray):
-        """Setup problem dimensions based on system and k-point."""
+        """
+        Setup problem dimensions based on system and k-point.
+        
+        NOTE: This is a simplified model implementation.
+        TODO: Calculate these from actual QE system data:
+        - n2d should be determined by the 2D plane wave cutoff
+        - nocros depends on the atomic orbitals crossing the interface
+        - noins depends on the interior orbitals
+        
+        For production use, these need to be extracted from:
+        - QE wavefunction data
+        - Pseudopotential information
+        - Atomic structure and orbital projections
+        """
         # Simplified model - in reality this depends on the number of
         # plane waves, atomic orbitals, etc.
         
@@ -142,10 +155,10 @@ class ComplexBandStructure:
         # of the Hamiltonian in the basis of Bloch functions
         
         # Model: simple tight-binding chain
-        # H = -t (|n><n+1| + |n+1><n|) + ε_0 |n><n|
+        # H = -t (|n><n+1| + |n+1><n|) + epsilon_0 |n><n|
         
         t = 1.0  # hopping parameter
-        eps0 = eryd  # on-site energy
+        eps0 = eryd  # on-site energy (epsilon_0)
         
         # Build block structure similar to PWCOND
         # The matrices have a structure: [[A11, A12], [A21, A22]]

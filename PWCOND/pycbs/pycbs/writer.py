@@ -39,20 +39,25 @@ class CBSWriter:
         
     def open(self):
         """Open all output files and write headers."""
-        self.f_re = open(f"{self.band_file}.re", 'w')
-        self.f_im = open(f"{self.band_file}.im", 'w')
-        self.f_co_re = open(f"{self.band_file}.co_re", 'w')
-        self.f_co_im = open(f"{self.band_file}.co_im", 'w')
-        self.f_3d = open(f"{self.band_file}.3d", 'w')
-        
-        # Write headers
-        self.f_re.write("# Re(k), E-Ef\n")
-        self.f_im.write("# Im(k), E-Ef\n")
-        self.f_co_re.write("# Re(k), E-Ef\n")
-        self.f_co_im.write("# Im(k), E-Ef\n")
-        self.f_3d.write("# Re(k), Im(k), E-Ef\n")
-        
-        self.is_open = True
+        try:
+            self.f_re = open(f"{self.band_file}.re", 'w')
+            self.f_im = open(f"{self.band_file}.im", 'w')
+            self.f_co_re = open(f"{self.band_file}.co_re", 'w')
+            self.f_co_im = open(f"{self.band_file}.co_im", 'w')
+            self.f_3d = open(f"{self.band_file}.3d", 'w')
+            
+            # Write headers
+            self.f_re.write("# Re(k), E-Ef\n")
+            self.f_im.write("# Im(k), E-Ef\n")
+            self.f_co_re.write("# Re(k), E-Ef\n")
+            self.f_co_im.write("# Im(k), E-Ef\n")
+            self.f_3d.write("# Re(k), Im(k), E-Ef\n")
+            
+            self.is_open = True
+        except IOError as e:
+            # Clean up any opened files on error
+            self.close()
+            raise IOError(f"Failed to open output files: {e}")
         
     def write_point(
         self,
@@ -94,7 +99,9 @@ class CBSWriter:
         
         # Sort k-values for output
         n = len(kvals)
-        nstl = n // 2  # assuming symmetric structure
+        # Number of states in the left-moving block
+        # Assumes symmetric structure: half states move right, half move left
+        n_states_left = n // 2
         
         # Write propagating states (real k)
         for i in range(nchan):
@@ -104,20 +111,20 @@ class CBSWriter:
                 self._write_propagating_state(kval, energy)
                 
                 # Left-moving state (if exists)
-                if nstl + i < len(kvals):
-                    kval = kvals[nstl + i]
+                if n_states_left + i < len(kvals):
+                    kval = kvals[n_states_left + i]
                     self._write_propagating_state(kval, energy)
         
         # Write evanescent states (complex k)
-        for k in range(nchan, nstl):
+        for k in range(nchan, n_states_left):
             if k < len(kvals):
                 # Forward evanescent
                 kval = kvals[k]
                 self._write_evanescent_state(kval, energy)
                 
                 # Backward evanescent
-                if nstl + k < len(kvals):
-                    kval = kvals[nstl + k]
+                if n_states_left + k < len(kvals):
+                    kval = kvals[n_states_left + k]
                     self._write_evanescent_state(kval, energy)
         
         # Flush buffers periodically
