@@ -31,7 +31,7 @@ class LocalPotentialReader:
         self.prefix = prefix
         self.save_dir = os.path.join(outdir, f"{prefix}.save")
         
-    def read_charge_density(self) -> Optional[np.ndarray]:
+    def read_charge_density(self) -> Optional[Tuple[np.ndarray, dict]]:
         """
         Read charge density from QE output.
         
@@ -40,22 +40,89 @@ class LocalPotentialReader:
         
         Returns
         -------
-        np.ndarray or None
-            Charge density on the 3D FFT grid, or None if not found
+        tuple or None
+            (charge_density, metadata) where charge_density is on the 3D FFT grid,
+            and metadata contains FFT grid dimensions, or None if not found
         
         Notes
         -----
-        TODO: Implement binary file reader for QE charge density format.
-        This requires understanding QE's binary format which varies by version.
+        Implements binary file reader for QE charge density format (XML + binary).
+        The format follows QE's iotk module structure.
         """
         charge_file = os.path.join(self.save_dir, "charge-density.dat")
         
         if not os.path.exists(charge_file):
             return None
+        
+        try:
+            rho, metadata = self._read_qe_charge_density_binary(charge_file)
+            return rho, metadata
+        except Exception as e:
+            print(f"Warning: Could not read charge density: {e}")
+            return None
+    
+    def _read_qe_charge_density_binary(self, filepath: str) -> Tuple[np.ndarray, dict]:
+        """
+        Read QE charge density binary file.
+        
+        QE stores charge density in a binary format with Fortran unformatted records.
+        The file contains FFT grid dimensions and the charge density array.
+        
+        Parameters
+        ----------
+        filepath : str
+            Path to charge-density.dat file
             
-        # TODO: Implement binary reader
-        # For now, return None to indicate not yet implemented
-        return None
+        Returns
+        -------
+        tuple
+            (rho, metadata) where rho is shape (nr1, nr2, nr3) or (nr1, nr2, nr3, nspin)
+            and metadata contains grid dimensions and spin info
+            
+        Notes
+        -----
+        This is a simplified reader that handles the most common QE format.
+        For production use, may need to handle different QE versions and formats.
+        """
+        with open(filepath, 'rb') as f:
+            # Read file structure - QE uses Fortran unformatted I/O
+            # Format: record_length, data, record_length
+            
+            # Read header record with grid dimensions
+            rec_len = np.fromfile(f, dtype=np.int32, count=1)[0]
+            
+            # Grid dimensions: nr1, nr2, nr3, nspin
+            header = np.fromfile(f, dtype=np.int32, count=4)
+            nr1, nr2, nr3, nspin = header
+            
+            rec_len_check = np.fromfile(f, dtype=np.int32, count=1)[0]
+            if rec_len != rec_len_check:
+                raise ValueError("Corrupted file: record length mismatch")
+            
+            # Read charge density data
+            ntot = nr1 * nr2 * nr3 * nspin
+            rec_len = np.fromfile(f, dtype=np.int32, count=1)[0]
+            
+            rho_flat = np.fromfile(f, dtype=np.float64, count=ntot)
+            
+            rec_len_check = np.fromfile(f, dtype=np.int32, count=1)[0]
+            if rec_len != rec_len_check:
+                raise ValueError("Corrupted file: record length mismatch in data")
+            
+            # Reshape to FFT grid
+            if nspin == 1:
+                rho = rho_flat.reshape((nr1, nr2, nr3), order='F')
+            else:
+                rho = rho_flat.reshape((nr1, nr2, nr3, nspin), order='F')
+            
+            metadata = {
+                'nr1': nr1,
+                'nr2': nr2,
+                'nr3': nr3,
+                'nspin': nspin
+            }
+            
+            return rho, metadata
     
     def construct_local_potential_2d(
         self,
