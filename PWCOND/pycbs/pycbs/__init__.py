@@ -13,6 +13,7 @@ from .calculator import CBSCalculator, read_kpoints_file
 from .reader import QEDataReader
 from .compbs import ComplexBandStructure
 from .wfc_reader import WavefunctionReader, read_wavefunction_metadata, GVectorGrid
+from .hamiltonian import HamiltonianBuilder, build_test_hamiltonian
 
 __all__ = [
     "CBSCalculator",
@@ -22,4 +23,6 @@ __all__ = [
     "WavefunctionReader",
     "read_wavefunction_metadata",
     "GVectorGrid",
+    "HamiltonianBuilder",
+    "build_test_hamiltonian",
 ]

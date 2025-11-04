@@ -139,19 +139,27 @@ To make PyCBS production-ready, implement in this order:
    - `wfc_reader.py` module created
    - File discovery implemented
    - Basic header reading working
-   - **NEW**: `GVectorGrid` class - 2D G-vector construction (following init_gper.f90)
+   - `GVectorGrid` class - 2D G-vector construction (following init_gper.f90)
    - Tests: 14/14 passing
    - Example: `examples/example_wfc_reader.py`
+
+✅ **1.5 Hamiltonian construction** (STARTED - Phase 1.5/2 overlap)
+   - **NEW**: `hamiltonian.py` module created
+   - **NEW**: `HamiltonianBuilder` class - Kinetic energy matrix construction
+   - **NEW**: Free-electron Hamiltonian in 2D plane wave basis
+   - **NEW**: CBS matrix formulation (A, B for generalized eigenvalue problem)
+   - Tests: 8/8 passing
+   - Example: `examples/example_hamiltonian.py`
 
 ⏳ **Next steps in Phase 1:**
    - Complete binary format parser for all QE versions
    - Read plane wave coefficients for all bands (from wfc files)
    - Handle gamma_only, spin-polarized, non-collinear cases
-   - Integrate with compbs.py for matrix construction
+   - Integrate Hamiltonian builder with compbs.py
 
-2. **Kinetic energy matrix** - T = (k + G)²/(2m) in plane wave basis (ready to implement with G-vectors)
-3. **Local potential** - Read and interpolate from charge density
-4. **Problem dimensions** - Calculate from system geometry
+2. **Kinetic energy matrix** - ✅ COMPLETED (T = (k + G)²/(2m) in plane wave basis)
+3. **Local potential** - ⏳ IN PROGRESS (framework ready, needs QE data integration)
+4. **Problem dimensions** - ✅ COMPLETED (using G-vector grid)
 
 ### Phase 2: Pseudopotentials (Important)
 5. **Norm-conserving PP** - Simpler case, good for testing

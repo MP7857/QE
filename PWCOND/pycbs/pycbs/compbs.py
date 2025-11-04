@@ -29,13 +29,23 @@ class ComplexBandStructure:
         Energy window parameter in Ry
     epsproj : float
         Projection threshold
+    gvec_grid : GVectorGrid, optional
+        Pre-constructed G-vector grid (Phase 1 integration)
     """
     
-    def __init__(self, reader, ecut2d=0.0, ewind=1.0, epsproj=1e-6):
+    def __init__(
+        self,
+        reader,
+        ecut2d=0.0,
+        ewind=1.0,
+        epsproj=1e-6,
+        gvec_grid=None
+    ):
         self.reader = reader
         self.ecut2d = ecut2d
         self.ewind = ewind
         self.epsproj = epsproj
+        self.gvec_grid = gvec_grid  # NEW: G-vector grid from Phase 1
         
         # Constants
         self.RYTOEV = 13.6056980659  # Ry to eV conversion
@@ -98,27 +108,32 @@ class ComplexBandStructure:
         """
         Setup problem dimensions based on system and k-point.
         
-        NOTE: This is a simplified model implementation.
-        TODO: Calculate these from actual QE system data:
-        - n2d should be determined by the 2D plane wave cutoff
+        NOTE: Now using G-vector grid for proper dimensions.
+        
+        For production use, additional components need to be added:
         - nocros depends on the atomic orbitals crossing the interface
         - noins depends on the interior orbitals
         
-        For production use, these need to be extracted from:
-        - QE wavefunction data
+        These need to be extracted from:
         - Pseudopotential information
         - Atomic structure and orbital projections
         """
-        # Simplified model - in reality this depends on the number of
-        # plane waves, atomic orbitals, etc.
+        # Try to use G-vector grid if available
+        if hasattr(self, 'gvec_grid') and self.gvec_grid is not None:
+            self.n2d = self.gvec_grid.ngper  # Number of 2D plane waves from G-vectors
+            print(f"Using G-vector grid: n2d = {self.n2d}")
+        else:
+            # Fallback to simplified model
+            self.n2d = 10
+            print("Warning: Using simplified model for n2d (no G-vector grid)")
         
-        # For demonstration, use a minimal model
-        # These would be calculated from the actual system
-        self.n2d = 10  # number of 2D plane waves
-        self.nocros = 2  # crossing orbitals
+        # For demonstration, no orbitals yet
+        self.nocros = 0  # crossing orbitals
         self.noins = 0  # inside orbitals
         self.norb = 2 * self.nocros + self.noins
         self.ntot = 2 * (self.n2d + self.nocros)
+        
+        print(f"Problem dimensions: n2d={self.n2d}, nocros={self.nocros}, ntot={self.ntot}")
         
     def _build_matrices(
         self,

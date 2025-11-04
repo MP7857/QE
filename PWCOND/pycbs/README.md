@@ -2,34 +2,40 @@
 
 PyCBS is a Python package that provides Complex Band Structure (CBS) calculation functionality, serving as a Python-based replacement for the PWCOND Fortran code in Quantum ESPRESSO. It reads simulation data files from Quantum ESPRESSO and calculates the complex band structure without performing transmission calculations.
 
-## ⚠️ Current Status - Prototype Implementation (Phase 1 IN PROGRESS)
+## ⚠️ Current Status - Prototype Implementation (Phase 1 & 1.5 IN PROGRESS)
 
 **IMPORTANT**: The current implementation uses a **simplified tight-binding model** for demonstration purposes. It does NOT yet read the actual Hamiltonian and potential from QE wavefunction data. 
 
-**Phase 1 Progress - Wavefunction Reader:**
+**Phase 1 Progress - Wavefunction Reader & Hamiltonian:**
 - ✅ **Completed**: Basic wavefunction file reader (`wfc_reader.py`)
 - ✅ File discovery and metadata extraction
 - ✅ Basic binary header parsing
-- ✅ **NEW**: 2D G-vector grid construction (`GVectorGrid` class)
-- ⏳ **In Progress**: Full coefficient reading, integration with CBS
+- ✅ 2D G-vector grid construction (`GVectorGrid` class)
+- ✅ **NEW**: Kinetic energy matrix construction (`HamiltonianBuilder` class)
+- ✅ **NEW**: Free-electron Hamiltonian in 2D plane wave basis
+- ✅ **NEW**: CBS matrix formulation for generalized eigenvalue problem
+- ⏳ **In Progress**: Full coefficient reading, potential integration
 
 **For accurate results**, the following still needs to be implemented:
 - Complete QE wavefunction data reading from binary files  
-- Construct proper Hamiltonian and overlap matrices from QE potential
-- Calculate actual 2D problem dimensions based on system properties
+- Integrate local and non-local pseudopotentials
+- Connect Hamiltonian builder to CBS calculator
+- Validation against PWCOND results
 
 **Current use cases:**
 - ✅ Learning the CBS calculation workflow
 - ✅ Testing the package structure and API
 - ✅ Understanding output formats
 - ✅ Exploring QE wavefunction file structure
-- ✅ **NEW**: Constructing 2D G-vector grids (following PWCOND init_gper.f90)
+- ✅ Constructing 2D G-vector grids (following PWCOND init_gper.f90)
+- ✅ **NEW**: Building kinetic energy and Hamiltonian matrices
+- ✅ **NEW**: Understanding CBS generalized eigenvalue problem
 - ❌ Production calculations requiring accurate results
 - ❌ Publication-quality data
 
 For production use with accurate physics, please use the original PWCOND Fortran code.
 
-See `ROADMAP.md` for detailed implementation status and `examples/example_wfc_reader.py` for the new G-vector functionality.
+See `ROADMAP.md` for detailed implementation status, `examples/example_wfc_reader.py` for G-vector functionality, and `examples/example_hamiltonian.py` for Hamiltonian construction.
 
 ## Features
 
