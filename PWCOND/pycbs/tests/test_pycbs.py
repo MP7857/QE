@@ -135,6 +135,114 @@ class TestCBSCalculator:
         assert calc.nk2 == 3
         assert calc.k1 == 0.5
         assert calc.k2 == 0.5
+    
+    def test_custom_kpoints_setting(self):
+        """Test setting custom k-points."""
+        calc = CBSCalculator(outdir='/tmp', prefix='test')
+        
+        # Define custom k-points
+        kpoints = np.array([
+            [0.0, 0.0],
+            [0.5, 0.0],
+            [0.0, 0.5],
+            [0.5, 0.5]
+        ])
+        weights = np.array([0.25, 0.25, 0.25, 0.25])
+        
+        calc.set_custom_kpoints(kpoints, weights)
+        
+        assert calc.custom_kpoints is not None
+        assert calc.custom_weights is not None
+        assert calc.custom_kpoints.shape == (4, 2)
+        assert calc.custom_weights.shape == (4,)
+        np.testing.assert_allclose(calc.custom_weights, weights)
+    
+    def test_custom_kpoints_with_3d_input(self):
+        """Test that 3D k-points are handled correctly."""
+        calc = CBSCalculator(outdir='/tmp', prefix='test')
+        
+        # Input with 3 columns (kx, ky, kz) - kz should be ignored
+        kpoints_3d = np.array([
+            [0.0, 0.0, 0.25],
+            [0.5, 0.0, 0.25],
+            [0.0, 0.5, 0.25],
+            [0.5, 0.5, 0.25]
+        ])
+        
+        calc.set_custom_kpoints(kpoints_3d)
+        
+        # Should extract only first 2 columns
+        assert calc.custom_kpoints.shape == (4, 2)
+        expected = kpoints_3d[:, :2]
+        np.testing.assert_allclose(calc.custom_kpoints, expected)
+        
+        # Weights should be auto-generated
+        assert np.isclose(calc.custom_weights.sum(), 1.0)
+        assert len(calc.custom_weights) == 4
+
+
+class TestKPointGridCustom:
+    """Tests for custom k-point functionality in KPointGrid."""
+    
+    def test_from_custom_kpoints(self):
+        """Test creating grid from custom k-points."""
+        kpoints = np.array([
+            [0.0, 0.0],
+            [0.5, 0.0],
+            [0.0, 0.5]
+        ])
+        weights = np.array([0.33, 0.33, 0.34])
+        
+        b1 = np.array([1.0, 0.0, 0.0])
+        b2 = np.array([0.0, 1.0, 0.0])
+        
+        grid = KPointGrid.from_custom_kpoints(kpoints, weights, b1, b2)
+        
+        assert grid.nkpts == 3
+        assert grid.nk1 == 0  # Indicates custom k-points
+        np.testing.assert_allclose(grid.xyk, kpoints)
+        np.testing.assert_allclose(grid.wkpt, weights)
+
+
+class TestReadKpointsFile:
+    """Tests for reading k-points from file."""
+    
+    def test_read_kpoints_file(self):
+        """Test reading k-points from PWCOND format file."""
+        import tempfile
+        from pycbs import read_kpoints_file
+        
+        # Create temporary file
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.dat') as f:
+            f.write("4\n")
+            f.write("0.0000  0.0000  0.25\n")
+            f.write("0.5000  0.0000  0.25\n")
+            f.write("0.0000  0.5000  0.25\n")
+            f.write("0.5000  0.5000  0.25\n")
+            fname = f.name
+        
+        try:
+            kpoints, weights = read_kpoints_file(fname)
+            
+            # Check dimensions
+            assert kpoints.shape == (4, 2)
+            assert weights.shape == (4,)
+            
+            # Check values
+            expected_kpts = np.array([
+                [0.0, 0.0],
+                [0.5, 0.0],
+                [0.0, 0.5],
+                [0.5, 0.5]
+            ])
+            np.testing.assert_allclose(kpoints, expected_kpts)
+            
+            # Check weights sum to 1
+            assert np.isclose(weights.sum(), 1.0)
+            
+        finally:
+            import os
+            os.remove(fname)
 
 
 def test_package_version():

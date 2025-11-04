@@ -46,6 +46,41 @@ print(f"Number of channels: {results['nchan']}")
 print(f"K-values: {results['kvals']}")
 ```
 
+### Using custom k-points (like PWCOND)
+
+You can specify custom transverse k-points instead of using an automatic grid:
+
+```python
+from pycbs import CBSCalculator, read_kpoints_file
+import numpy as np
+
+# Method 1: Define k-points directly
+calc = CBSCalculator(outdir='./tmp', prefix='al', band_file='bands.al')
+
+kpoints = np.array([
+    [0.0000, 0.0000],  # Gamma
+    [0.5000, 0.0000],  # X
+    [0.0000, 0.5000],  # Y
+    [0.5000, 0.5000],  # M
+])
+weights = np.array([0.25, 0.25, 0.25, 0.25])
+
+calc.set_custom_kpoints(kpoints, weights)
+calc.set_energy_range(energy0=10.0, denergy=-0.4, nenergy=26)
+calc.run()
+
+# Method 2: Read from file (PWCOND format)
+# File format:
+# 4
+# 0.0000  0.0000  0.25
+# 0.5000  0.0000  0.25
+# 0.0000  0.5000  0.25
+# 0.5000  0.5000  0.25
+
+kpoints, weights = read_kpoints_file('kpoints.dat')
+calc.set_custom_kpoints(kpoints, weights)
+```
+
 ### Command-line interface
 
 ```bash

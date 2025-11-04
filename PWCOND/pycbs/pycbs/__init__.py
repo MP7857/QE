@@ -9,7 +9,7 @@ __version__ = "0.1.0"
 __author__ = "QE Developers"
 __license__ = "GPL-2.0-or-later"
 
-from .calculator import CBSCalculator
+from .calculator import CBSCalculator, read_kpoints_file
 from .reader import QEDataReader
 from .compbs import ComplexBandStructure
 
@@ -17,4 +17,5 @@ __all__ = [
     "CBSCalculator",
     "QEDataReader", 
     "ComplexBandStructure",
+    "read_kpoints_file",
 ]

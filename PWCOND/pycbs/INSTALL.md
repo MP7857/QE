@@ -97,6 +97,39 @@ calc.set_kpoints_grid(
 )
 ```
 
+### Define Custom K-points (PWCOND-style)
+
+Instead of an automatic grid, you can specify exact k-points:
+
+```python
+import numpy as np
+from pycbs import read_kpoints_file
+
+# Method 1: Directly with numpy arrays
+kpoints = np.array([
+    [0.0000, 0.0000],
+    [0.5000, 0.0000],
+    [0.0000, 0.5000],
+    [0.5000, 0.5000]
+])
+weights = np.array([0.25, 0.25, 0.25, 0.25])
+
+calc.set_custom_kpoints(kpoints, weights)
+
+# Method 2: Read from file (PWCOND format)
+# File contains:
+# 4
+# 0.0000  0.0000  0.25
+# 0.5000  0.0000  0.25
+# 0.0000  0.5000  0.25
+# 0.5000  0.5000  0.25
+
+kpoints, weights = read_kpoints_file('kpoints.dat')
+calc.set_custom_kpoints(kpoints, weights)
+```
+
+This is compatible with PWCOND's k-point input format. The third column (if present) is treated as the weight.
+
 ### Adjust Calculation Parameters
 
 ```python
@@ -131,7 +164,8 @@ for (ik, ien), result in results.items():
 ✅ Read QE XML data files  
 ✅ Solve generalized eigenvalue problem for complex k-vectors  
 ✅ Generate output files compatible with PWCOND  
-✅ Support for 2D k-point grids  
+✅ Support for 2D k-point grids (automatic and custom)  
+✅ PWCOND-compatible k-point input format  
 ✅ Pure Python implementation - easy to modify and extend  
 
 ### What PyCBS Does NOT Do

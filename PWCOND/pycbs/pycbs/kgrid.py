@@ -6,7 +6,7 @@ grids needed for CBS calculations.
 """
 
 import numpy as np
-from typing import Tuple, List
+from typing import Tuple, List, Optional
 
 
 class KPointGrid:
@@ -71,6 +71,50 @@ class KPointGrid:
                 self.wkpt[ik] = weight
                 
                 ik += 1
+    
+    @classmethod
+    def from_custom_kpoints(
+        cls,
+        kpoints: np.ndarray,
+        weights: np.ndarray,
+        b1: np.ndarray,
+        b2: np.ndarray
+    ):
+        """
+        Create a KPointGrid from custom k-point list.
+        
+        Parameters
+        ----------
+        kpoints : np.ndarray
+            Array of k-point coordinates with shape (nkpts, 2)
+            in crystal coordinates
+        weights : np.ndarray
+            Array of k-point weights with shape (nkpts,)
+        b1 : np.ndarray
+            First reciprocal lattice vector
+        b2 : np.ndarray
+            Second reciprocal lattice vector
+            
+        Returns
+        -------
+        KPointGrid
+            K-point grid object with custom k-points
+        """
+        # Create a dummy instance with minimal grid
+        instance = cls.__new__(cls)
+        instance.nk1 = 0  # Indicate custom k-points
+        instance.nk2 = 0
+        instance.k1 = 0.0
+        instance.k2 = 0.0
+        instance.b1 = b1
+        instance.b2 = b2
+        
+        # Set custom k-points
+        instance.nkpts = kpoints.shape[0]
+        instance.xyk = kpoints.copy()
+        instance.wkpt = weights.copy()
+        
+        return instance
                 
     def get_kpoint(self, ik: int) -> np.ndarray:
         """
