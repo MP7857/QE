@@ -2,7 +2,27 @@
 
 ## Overview
 
-Successfully created **PyCBS** (Python Complex Band Structure), a Python package that replaces the PWCOND Fortran code functionality for CBS calculations. This package reads Quantum ESPRESSO simulation files and calculates Complex Band Structure without transmission calculations.
+Successfully created **PyCBS** (Python Complex Band Structure), a Python package prototype for CBS calculations. This package demonstrates the CBS calculation workflow and provides a foundation for future development.
+
+## ⚠️ Current Implementation Status
+
+**PROTOTYPE IMPLEMENTATION**: The current version uses a **simplified tight-binding model** for demonstration purposes. It does NOT implement the full physics required for accurate results.
+
+**What works:**
+- Package structure and API design
+- Reading QE XML metadata (lattice, atoms, etc.)
+- K-point grid management (automatic and custom)
+- Output file format (PWCOND-compatible)
+- Command-line interface
+
+**What needs implementation for production use:**
+- Reading QE wavefunction data from binary files
+- Constructing actual Hamiltonian and overlap matrices
+- Proper 2D problem dimension calculation
+- Integration with QE potential and pseudopotentials
+
+**Use for:** Learning, API testing, format validation
+**Do NOT use for:** Production calculations, publications, accurate physics
 
 ## What Was Delivered
 

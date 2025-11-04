@@ -330,6 +330,23 @@ class CBSCalculator:
             epsproj=self.epsproj
         )
         
+        # Display important warning about current implementation
+        print("\n" + "="*70)
+        print("WARNING: SIMPLIFIED MODEL IN USE")
+        print("="*70)
+        print("The current implementation uses a toy tight-binding model for")
+        print("demonstration purposes. It does NOT use the actual Hamiltonian")
+        print("and potential from your QE calculation.")
+        print()
+        print("For accurate results, the following needs to be implemented:")
+        print("  - Read QE wavefunction data from binary files")
+        print("  - Construct proper Hamiltonian and overlap matrices")
+        print("  - Calculate actual 2D problem dimensions from system")
+        print()
+        print("Current results are qualitative only and should NOT be used")
+        print("for publication or production work.")
+        print("="*70 + "\n")
+        
         # Initialize writer if output requested
         if self.band_file:
             self.writer = CBSWriter(self.band_file)

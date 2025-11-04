@@ -1,8 +1,17 @@
 # Installation and Usage Guide for PyCBS
 
+## ⚠️ Important Notice
+
+**PyCBS is currently a PROTOTYPE implementation** using a simplified tight-binding model. It does NOT provide accurate CBS calculations yet. The current version is suitable for:
+- Learning the CBS workflow
+- Testing the API design
+- Understanding output formats
+
+**For accurate production calculations, use the original PWCOND Fortran code.**
+
 ## Overview
 
-PyCBS (Python Complex Band Structure) is a pure Python implementation that replaces the CBS calculation functionality of PWCOND from Quantum ESPRESSO. It reads simulation data files from QE and calculates complex band structures without performing transmission calculations.
+PyCBS (Python Complex Band Structure) is a Python package prototype that demonstrates CBS calculation functionality. The package structure and API are complete, but the physics implementation needs enhancement to read actual QE wavefunction data.
 
 ## Requirements
 
