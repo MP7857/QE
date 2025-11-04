@@ -7,8 +7,9 @@ from compbs_2.f90 and related routines.
 
 import numpy as np
 from scipy import linalg
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, Optional
 import warnings
+from .hamiltonian import HamiltonianBuilder
 
 
 class ComplexBandStructure:
@@ -143,9 +144,83 @@ class ComplexBandStructure:
         """
         Build A and B matrices for the generalized eigenvalue problem.
         
-        This is a simplified model implementation. A full implementation
-        would construct these from the Hamiltonian, overlap matrix, and
-        potential from QE output.
+        Now integrates with HamiltonianBuilder for physics-based matrices
+        when G-vector grid is available. Falls back to simplified model
+        for demonstration purposes.
+        
+        Parameters
+        ----------
+        kpoint : np.ndarray
+            2D k-point
+        eryd : float
+            Energy in Ry
+            
+        Returns
+        -------
+        amat, bmat : np.ndarray
+            Matrices for GEP A v = k B v
+        """
+        # Try to use HamiltonianBuilder if G-vector grid available
+        if hasattr(self, 'gvec_grid') and self.gvec_grid is not None:
+            return self._build_matrices_from_hamiltonian(kpoint, eryd)
+        else:
+            # Fallback to simplified toy model
+            warnings.warn(
+                "G-vector grid not available, using simplified tight-binding model. "
+                "Results are qualitative only.",
+                UserWarning
+            )
+            return self._build_matrices_toy_model(kpoint, eryd)
+    
+    def _build_matrices_from_hamiltonian(
+        self,
+        kpoint: np.ndarray,
+        eryd: float
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Build matrices using HamiltonianBuilder with proper physics.
+        
+        This constructs the CBS matrices from the Hamiltonian and overlap
+        matrices in the 2D plane wave basis from the G-vector grid.
+        
+        Parameters
+        ----------
+        kpoint : np.ndarray
+            2D k-point
+        eryd : float
+            Energy in Ry
+            
+        Returns
+        -------
+        amat, bmat : np.ndarray
+            Matrices for GEP A v = k B v
+        """
+        # Create HamiltonianBuilder
+        builder = HamiltonianBuilder(self.gvec_grid, energy=eryd)
+        
+        # Use a guess k_z value for building matrices
+        # In the actual GEP solution, k_z will be the eigenvalue
+        kz_guess = 0.5  # Initial guess
+        
+        # Build CBS matrices using HamiltonianBuilder
+        amat, bmat = builder.build_cbs_matrices(
+            kz=kz_guess,
+            nocros=self.nocros,
+            noins=self.noins
+        )
+        
+        return amat, bmat
+    
+    def _build_matrices_toy_model(
+        self,
+        kpoint: np.ndarray,
+        eryd: float
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Build simplified toy tight-binding model matrices.
+        
+        This is ONLY for demonstration when no G-vector grid is available.
+        DO NOT use for production calculations.
         
         Parameters
         ----------
@@ -164,10 +239,6 @@ class ComplexBandStructure:
         # Initialize matrices
         amat = np.zeros((n, n), dtype=complex)
         bmat = np.zeros((n, n), dtype=complex)
-        
-        # Build simplified model matrices
-        # In reality, these come from the tight-binding representation
-        # of the Hamiltonian in the basis of Bloch functions
         
         # Model: simple tight-binding chain
         # H = -t (|n><n+1| + |n+1><n|) + epsilon_0 |n><n|

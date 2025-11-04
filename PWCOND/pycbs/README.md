@@ -2,24 +2,32 @@
 
 PyCBS is a Python package that provides Complex Band Structure (CBS) calculation functionality, serving as a Python-based replacement for the PWCOND Fortran code in Quantum ESPRESSO. It reads simulation data files from Quantum ESPRESSO and calculates the complex band structure without performing transmission calculations.
 
-## ⚠️ Current Status - Prototype Implementation (Phase 1 & 1.5 IN PROGRESS)
+## ⚠️ Current Status - Phase 1/2 Integration ADVANCING
 
-**IMPORTANT**: The current implementation uses a **simplified tight-binding model** for demonstration purposes. It does NOT yet read the actual Hamiltonian and potential from QE wavefunction data. 
+**IMPORTANT**: Significant progress has been made on physics-based implementation!
 
-**Phase 1 Progress - Wavefunction Reader & Hamiltonian:**
+**Phase 1 & 2 Progress - Wavefunction Reader & Hamiltonian:**
 - ✅ **Completed**: Basic wavefunction file reader (`wfc_reader.py`)
 - ✅ File discovery and metadata extraction
 - ✅ Basic binary header parsing
-- ✅ 2D G-vector grid construction (`GVectorGrid` class)
+- ✅ 2D G-vector grid construction (`GVectorGrid` class - following init_gper.f90)
 - ✅ **NEW**: Kinetic energy matrix construction (`HamiltonianBuilder` class)
 - ✅ **NEW**: Free-electron Hamiltonian in 2D plane wave basis
 - ✅ **NEW**: CBS matrix formulation for generalized eigenvalue problem
-- ⏳ **In Progress**: Full coefficient reading, potential integration
+- ✅ **NEW**: Integration with CBS calculator (uses HamiltonianBuilder when G-vector grid available)
+- ⏳ **In Progress**: Local/non-local pseudopotential integration
+- ⏳ **In Progress**: Full coefficient reading from binary files
 
-**For accurate results**, the following still needs to be implemented:
-- Complete QE wavefunction data reading from binary files  
-- Integrate local and non-local pseudopotentials
-- Connect Hamiltonian builder to CBS calculator
+**What works NOW:**
+- Free-electron complex band structure calculations with proper plane wave basis
+- Physics-based kinetic energy matrices T = (G+k)²/(2m)
+- Proper generalized eigenvalue problem formulation
+- Automatic fallback to toy model when G-vector grid not available
+
+**For accurate results with pseudopotentials**, the following still needs implementation:
+- Local pseudopotential from QE charge density
+- Non-local pseudopotential projections  
+- Complete wavefunction coefficient reading
 - Validation against PWCOND results
 
 **Current use cases:**
@@ -30,12 +38,13 @@ PyCBS is a Python package that provides Complex Band Structure (CBS) calculation
 - ✅ Constructing 2D G-vector grids (following PWCOND init_gper.f90)
 - ✅ **NEW**: Building kinetic energy and Hamiltonian matrices
 - ✅ **NEW**: Understanding CBS generalized eigenvalue problem
-- ❌ Production calculations requiring accurate results
+- ✅ **NEW**: Free-electron CBS calculations
+- ❌ Production calculations with pseudopotentials (still needs PP integration)
 - ❌ Publication-quality data
 
-For production use with accurate physics, please use the original PWCOND Fortran code.
+For production use with accurate physics and pseudopotentials, please use the original PWCOND Fortran code.
 
-See `ROADMAP.md` for detailed implementation status, `examples/example_wfc_reader.py` for G-vector functionality, and `examples/example_hamiltonian.py` for Hamiltonian construction.
+See `ROADMAP.md` for detailed implementation status, `examples/example_wfc_reader.py` for G-vector functionality, `examples/example_hamiltonian.py` for Hamiltonian construction, and **NEW** `examples/example_integrated_cbs.py` for integrated physics-based CBS calculation.
 
 ## Features
 
