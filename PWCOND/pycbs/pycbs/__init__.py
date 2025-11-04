@@ -12,10 +12,13 @@ __license__ = "GPL-2.0-or-later"
 from .calculator import CBSCalculator, read_kpoints_file
 from .reader import QEDataReader
 from .compbs import ComplexBandStructure
+from .wfc_reader import WavefunctionReader, read_wavefunction_metadata
 
 __all__ = [
     "CBSCalculator",
     "QEDataReader", 
     "ComplexBandStructure",
     "read_kpoints_file",
+    "WavefunctionReader",
+    "read_wavefunction_metadata",
 ]

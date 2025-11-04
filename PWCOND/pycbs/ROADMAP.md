@@ -133,8 +133,21 @@ The CBS calculation requires:
 
 To make PyCBS production-ready, implement in this order:
 
-### Phase 1: Core Physics (Essential)
-1. **Wavefunction reader** - Parse QE binary files
+### Phase 1: Core Physics (Essential) - **IN PROGRESS**
+
+✅ **1. Wavefunction reader** (COMPLETED)
+   - `wfc_reader.py` module created
+   - File discovery implemented
+   - Basic header reading working
+   - Tests: 10/10 passing
+   - Example: `examples/example_wfc_reader.py`
+
+⏳ **Next steps in Phase 1:**
+   - Complete binary format parser for all QE versions
+   - Read G-vector indices from gvectors.dat  
+   - Read plane wave coefficients for all bands
+   - Handle gamma_only, spin-polarized, non-collinear cases
+
 2. **Kinetic energy matrix** - T = (k + G)²/(2m) in plane wave basis
 3. **Local potential** - Read and interpolate from charge density
 4. **Problem dimensions** - Calculate from system geometry
