@@ -13,23 +13,15 @@ A Python script for checking the phase structure of PWCOND's `four.f90` projecto
 
 ### Usage
 
-1. **Instrument `four.f90`** to write a debug file. Add the following code after `w0` is fully assembled:
+**Note:** Debug output is now built into `four.f90` and can be enabled without code modifications.
 
-   ```fortran
-   ! Debug output for phase checking
-   integer :: debug_unit
-   if (ig == 1 .and. kz == 1) then
-      call find_free_unit(debug_unit)
-      open(unit=debug_unit, file='w0_debug.dat', status='unknown')
-      do m = 1, 7
-         write(debug_unit, '(3I4,2ES20.10)') kz-1, ig-1, m-1, &
-              real(w0(kz,ig,m)), aimag(w0(kz,ig,m))
-      enddo
-      close(debug_unit)
-   endif
+1. **Enable debug output** by setting an environment variable before running PWCOND:
+
+   ```bash
+   export PWCOND_DEBUG_PHASES=1
    ```
 
-2. **Run PWCOND** to generate the debug file (e.g., `w0_debug.dat`)
+2. **Run PWCOND** - it will automatically generate `w0_debug.dat` in the working directory
 
 3. **Run the phase checker**:
 
@@ -42,6 +34,18 @@ A Python script for checking the phase structure of PWCOND's `four.f90` projecto
    ```bash
    python3 tools/check_pwcond_phases.py w0_debug.dat --gauge pwcond
    ```
+
+### Debug File Format
+
+The `w0_debug.dat` file contains:
+- Header comments with metadata (lb, nz1, ngper, nm)
+- Data lines: `kz ig m Re(w0) Im(w0)` (zero-based indices for Python)
+- A subset of the full w0 array (first 3 kz values, first 5 ig values, all m channels)
+
+To disable debug output, simply unset the environment variable:
+```bash
+unset PWCOND_DEBUG_PHASES
+```
 
 ### Output
 
