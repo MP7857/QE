@@ -9,6 +9,7 @@ build/
 *.o
 *.x
 *.pyc
+__pycache__/
 *.orig
 *.swp
 *.UPF
