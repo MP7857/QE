@@ -17,11 +17,15 @@ A Python script for checking the phase structure of PWCOND's `four.f90` projecto
 
    ```fortran
    ! Debug output for phase checking
+   integer :: debug_unit
    if (ig == 1 .and. kz == 1) then
+      call find_free_unit(debug_unit)
+      open(unit=debug_unit, file='w0_debug.dat', status='unknown')
       do m = 1, 7
-         write(777, '(3I4,2ES20.10)') kz-1, ig-1, m-1, &
+         write(debug_unit, '(3I4,2ES20.10)') kz-1, ig-1, m-1, &
               real(w0(kz,ig,m)), aimag(w0(kz,ig,m))
       enddo
+      close(debug_unit)
    endif
    ```
 

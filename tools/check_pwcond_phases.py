@@ -218,14 +218,15 @@ def main():
     #   etc.
     #
     # You MUST adapt this mapping to your actual w0 layout.
+    # Note: The ordering follows four.f90, where d_{z^2-1} means d_{3z^2-r^2}
     m_map_example = {
         0: 0,  # s or z
         1: 1,  # cos φ  (p_-x)
         2: 1,  # sin φ  (p_-y)
         # Add entries for d and f as needed:
-        # 3: 0, # d_z^2-1
-        # 4: 1, # d_-xz
-        # 5: 1, # d_-yz
+        # 3: 0, # d_{z^2-1} (i.e., d_{3z^2-r^2})
+        # 4: 1, # d_{-xz}
+        # 5: 1, # d_{-yz}
         # 6: 2, # d_{x^2-y^2}
         # 7: 2, # d_{xy}
         # ...
