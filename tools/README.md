@@ -50,6 +50,11 @@ To disable debug output, simply unset the environment variable:
 unset PWCOND_DEBUG_PHASES
 ```
 
+**Note on file size:** For long-running calculations with many orbitals, the debug file can grow large. To manage this:
+- Delete or rename `w0_debug.dat` before starting a new calculation series
+- Use the subset output (only first 3 kz, first 5 ig values per orbital)
+- Disable debug output when not actively analyzing phase patterns
+
 ### Output
 
 The script will print a table showing:

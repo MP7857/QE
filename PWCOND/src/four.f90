@@ -398,13 +398,15 @@ subroutine write_w0_debug(w0, lb, nz1, ngper)
   
   ! Find free unit and open debug file for appending
   call find_free_unit(debug_unit)
+  if (debug_unit < 0) return  ! No free unit available
+  
   if (file_exists) then
      ! Append to existing file
      open(unit=debug_unit, file='w0_debug.dat', status='old', &
           position='append', action='write', iostat=ios)
   else
-     ! Create new file and write header
-     open(unit=debug_unit, file='w0_debug.dat', status='new', &
+     ! Create new file and write header (use 'replace' to avoid race conditions)
+     open(unit=debug_unit, file='w0_debug.dat', status='replace', &
           action='write', iostat=ios)
      if (ios == 0) then
         write(debug_unit, '(A)') '# w0 debug output for phase checking'
@@ -414,7 +416,7 @@ subroutine write_w0_debug(w0, lb, nz1, ngper)
      endif
   endif
   
-  if (ios /= 0) return  ! Failed to open file
+  if (ios /= 0) return  ! Failed to open file, skip cleanup
   
   ! Write separator and metadata for this iteration
   write(debug_unit, '(A)') '#'
@@ -436,7 +438,7 @@ subroutine write_w0_debug(w0, lb, nz1, ngper)
   
   close(debug_unit)
   
-  write(*,'(A)') '*** PWCOND DEBUG: w0 data written to w0_debug.dat'
+  write(*,'(A)') '*** PWCOND DEBUG: w0 data appended to w0_debug.dat'
   write(*,'(A,I2,A,I2,A)') '***              lb=', lb, ', nm=', nm, ' channels'
   
 end subroutine write_w0_debug
