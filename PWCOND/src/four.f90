@@ -24,8 +24,8 @@ subroutine four(w0, z0, dz, tblm, taunew, r, rab, betar)
 ! For a fixed l it computes w0 for all m.
 !
 ! Physics background:
-! - UPF pseudopotentials define projectors using complex spherical harmonics
-!   Y_l^m(theta,phi) in the Condon-Shortley convention
+! - UPF (Unified Pseudopotential Format) pseudopotentials define projectors using
+!   complex spherical harmonics Y_l^m(theta,phi) in the Condon-Shortley convention
 ! - Internally, this routine uses REAL spherical harmonics (cos/sin combinations)
 ! - Phase conventions: The 2D Fourier transform uses the plane-wave expansion:
 !   exp(-i g·r_perp) = sum_m (-i)^m J_m(g r_perp) exp(i m(phi - phi_g))
@@ -293,7 +293,8 @@ implicit none
         w0(kz,ig,4)=s1*w0(kz,ig,4)
       elseif (lb.eq.3) then
         ! f-orbitals final phase and normalization
-        ! Phase pattern: m=0→real (s4), m=1→+i (cim*s3), m=2→-1 (-s2), m=3→-i (-cim*s1)
+        ! Phase factors: m=0→real, m=1→+i, m=2→-1, m=3→-i (PWCOND gauge)
+        ! Implementation: m=0 uses s4, m=1 uses cim*s3, m=2 uses -s2, m=3 uses -cim*s1
         ! Note: m=2,3 have negative signs, consistent with PWCOND gauge
         t1=w0(kz,ig,1);wa1=wadd(kz,ig)
         t2=w0(kz,ig,2);wa2=wadd2(kz,ig)
