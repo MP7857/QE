@@ -73,15 +73,16 @@ def load_w0_debug_ascii(path: Path) -> np.ndarray:
         with zero-based indices for kz, ig, m.
     """
     try:
-        data = np.loadtxt(path)
+        # Explicitly specify comments='#' to ensure all lines starting with # are skipped
+        # Set ndmin=2 to ensure we always get a 2D array
+        data = np.loadtxt(path, comments='#', ndmin=2)
     except Exception as e:
         raise ValueError(f"Failed to load data from {path}: {e}")
     
     if data.size == 0:
         raise ValueError(f"No data found in {path}. File may contain only comments or be empty.")
     
-    if data.ndim == 1:
-        data = data[None, :]
+    # ndmin=2 ensures data is always 2D, so no need to reshape
     
     if data.shape[1] != 5:
         raise ValueError(
