@@ -38,9 +38,12 @@ A Python script for checking the phase structure of PWCOND's `four.f90` projecto
 ### Debug File Format
 
 The `w0_debug.dat` file contains:
-- Header comments with metadata (lb, nz1, ngper, nm)
-- Data lines: `kz ig m Re(w0) Im(w0)` (zero-based indices for Python)
-- A subset of the full w0 array (first 3 kz values, first 5 ig values, all m channels)
+- Global header (written once when file is created) with format information
+- For each call to `four()`: 
+  - Block separator and metadata comments (lb, nz1, ngper, nm)
+  - Data lines: `kz ig m Re(w0) Im(w0)` (zero-based indices for Python)
+  - A subset of the w0 array (first 3 kz values, first 5 ig values, all m channels)
+- **Data is appended** across multiple iterations, allowing analysis of multiple orbitals
 
 To disable debug output, simply unset the environment variable:
 ```bash

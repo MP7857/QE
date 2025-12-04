@@ -356,10 +356,11 @@ end function indexr
 subroutine write_w0_debug(w0, lb, nz1, ngper)
   !
   ! Debug output subroutine for phase checking
-  ! Writes w0(kz,ig,m) data to 'w0_debug.dat' for analysis with
+  ! Appends w0(kz,ig,m) data to 'w0_debug.dat' for analysis with
   ! tools/check_pwcond_phases.py
   !
   ! Enable by setting environment variable: export PWCOND_DEBUG_PHASES=1
+  ! Data from multiple iterations is appended to allow comparison across orbitals.
   !
   USE kinds, ONLY: DP
   implicit none
@@ -367,10 +368,10 @@ subroutine write_w0_debug(w0, lb, nz1, ngper)
   integer, intent(in) :: lb, nz1, ngper
   complex(DP), intent(in) :: w0(nz1, ngper, 7)
   
-  integer :: kz, ig, m, nm, debug_unit
+  integer :: kz, ig, m, nm, debug_unit, ios
   integer, external :: find_free_unit
   character(len=10) :: env_val
-  logical :: debug_enabled
+  logical :: debug_enabled, file_exists
   
   ! Check if debug output is enabled via environment variable
   call get_environment_variable('PWCOND_DEBUG_PHASES', env_val)
@@ -392,18 +393,35 @@ subroutine write_w0_debug(w0, lb, nz1, ngper)
      return  ! Unknown lb value
   endif
   
-  ! Find free unit and open debug file
-  call find_free_unit(debug_unit)
-  open(unit=debug_unit, file='w0_debug.dat', status='unknown', action='write')
+  ! Check if file exists to determine whether to write header
+  inquire(file='w0_debug.dat', exist=file_exists)
   
-  ! Write header comment
-  write(debug_unit, '(A)') '# w0 debug output for phase checking'
+  ! Find free unit and open debug file for appending
+  call find_free_unit(debug_unit)
+  if (file_exists) then
+     ! Append to existing file
+     open(unit=debug_unit, file='w0_debug.dat', status='old', &
+          position='append', action='write', iostat=ios)
+  else
+     ! Create new file and write header
+     open(unit=debug_unit, file='w0_debug.dat', status='new', &
+          action='write', iostat=ios)
+     if (ios == 0) then
+        write(debug_unit, '(A)') '# w0 debug output for phase checking'
+        write(debug_unit, '(A)') '# Format: kz ig m Re(w0) Im(w0)'
+        write(debug_unit, '(A)') '# All indices are zero-based for Python compatibility'
+        write(debug_unit, '(A)') '# Each block below corresponds to one call to four()'
+     endif
+  endif
+  
+  if (ios /= 0) return  ! Failed to open file
+  
+  ! Write separator and metadata for this iteration
+  write(debug_unit, '(A)') '#'
   write(debug_unit, '(A,I2)') '# lb (angular momentum) = ', lb
   write(debug_unit, '(A,I4)') '# nz1 = ', nz1
   write(debug_unit, '(A,I4)') '# ngper = ', ngper
   write(debug_unit, '(A,I2)') '# nm (number of m channels) = ', nm
-  write(debug_unit, '(A)') '# Format: kz ig m Re(w0) Im(w0)'
-  write(debug_unit, '(A)') '# All indices are zero-based for Python compatibility'
   
   ! Write a subset of data (to keep file size manageable)
   ! Write first few kz and ig values, all m channels
