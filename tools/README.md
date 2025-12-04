@@ -13,7 +13,7 @@ A Python script for checking the phase structure of PWCOND's `four.f90` projecto
 
 ### Usage
 
-**Note:** Debug output is now built into `four.f90` and can be enabled without code modifications.
+**Note:** As of this PR, debug output is built into `four.f90` and can be enabled without code modifications.
 
 1. **Enable debug output** by setting an environment variable before running PWCOND:
 

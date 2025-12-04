@@ -368,6 +368,7 @@ subroutine write_w0_debug(w0, lb, nz1, ngper)
   complex(DP), intent(in) :: w0(nz1, ngper, 7)
   
   integer :: kz, ig, m, nm, debug_unit
+  integer, external :: find_free_unit
   character(len=10) :: env_val
   logical :: debug_enabled
   
@@ -377,15 +378,16 @@ subroutine write_w0_debug(w0, lb, nz1, ngper)
   
   if (.not. debug_enabled) return
   
-  ! Determine number of m channels based on lb
+  ! Determine number of m channels based on lb (angular momentum quantum number)
+  ! Number of m channels: s(l=0)→1, p(l=1)→3, d(l=2)→5, f(l=3)→7
   if (lb.eq.0) then
-     nm = 1
+     nm = 1  ! s-orbital
   elseif (lb.eq.1) then
-     nm = 3
+     nm = 3  ! p-orbitals
   elseif (lb.eq.2) then
-     nm = 5
+     nm = 5  ! d-orbitals
   elseif (lb.eq.3) then
-     nm = 7
+     nm = 7  ! f-orbitals
   else
      return  ! Unknown lb value
   endif
