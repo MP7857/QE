@@ -8,6 +8,10 @@
 ! Modified by M. Pourfath (2025)
 ! Extended to include f-orbital (l = 3) calculations.
 !
+! IMPORTANT: Physics invariants and phase conventions are documented in
+!            .github/copilot-instructions.md
+!            Any modifications MUST preserve these invariants.
+!
 subroutine four(w0, z0, dz, tblm, taunew, r, rab, betar)
 !
 ! This routine computes the bidimensional fourier transform of the
@@ -19,7 +23,15 @@ subroutine four(w0, z0, dz, tblm, taunew, r, rab, betar)
 !   (see Gradshtein "Tables of integrals")
 ! For a fixed l it computes w0 for all m.
 !
-! The order of spherical harmonics used:
+! Physics background:
+! - UPF pseudopotentials define projectors using complex spherical harmonics
+!   Y_l^m(theta,phi) in the Condon-Shortley convention
+! - Internally, this routine uses REAL spherical harmonics (cos/sin combinations)
+! - Phase conventions: The 2D Fourier transform uses the plane-wave expansion:
+!   exp(-i g·r_perp) = sum_m (-i)^m J_m(g r_perp) exp(i m(phi - phi_g))
+! - This leads to phase pattern: m=0→+1, m=1→-i, m=2→-1, m=3→+i
+!
+! The order of spherical harmonics used (real harmonics, PWCOND ordering):
 !             s ;
 !             p_z, p_{-x}, p_{-y} ;
 !             d_{z^2-1}, d_{-xz}, d_{-yz}, d_{x^2-y^2}, d_{xy}
@@ -95,6 +107,10 @@ implicit none
          else
             nmeshs=nmesh+1
          endif
+         ! RADIAL INTEGRATION: Compute radial integrals x1..x6 using
+         ! Bessel functions J_m(g*r_perp) with appropriate powers of r and r_perp.
+         ! These are pure RADIAL quantities - NO phase factors here.
+         ! Phase corrections applied later in angular assembly (see lines 250-290).
          do ir=iz, nmeshs
             rz=sqrt(r(ir)**2-zsl(kz)**2)
             if (lb.eq.0) then
@@ -186,6 +202,10 @@ implicit none
           fx6(kz)=0.d0
        endif
      enddo
+     ! ANGULAR ASSEMBLY: Combine radial integrals (fx1..fx6) with angular factors
+     ! (cs, sn, cs2, sn2, cs3, sn3) to form real spherical harmonics.
+     ! This implements the cos/sin combinations that convert complex Y_l^m
+     ! to real harmonics in the PWCOND ordering.
      do igphi=1, ninsh(ign)
         ig=ig+1
         if (gn.gt.eps) then
@@ -215,6 +235,13 @@ implicit none
                w0(kz,ig,4)=cs2*fx1(kz)
                wadd(kz,ig)=fx4(kz)
             elseif (lb.eq.3) then
+               ! f-orbitals (l=3): 7 channels for m = 0, ±1, ±2, ±3
+               ! m=0: w0(:,:,1) from fx5 (J_0 integral)
+               ! m=1: w0(:,:,2),w0(:,:,3) from fx3,fx4 with cs,sn (J_1 integral, cos/sin)
+               ! m=2: w0(:,:,4),w0(:,:,5) from fx2 with cs2,sn2 (J_2 integral, cos/sin)
+               ! m=3: w0(:,:,6),w0(:,:,7) from fx1 with cs3,sn3 (J_3 integral, cos/sin)
+               ! M-BLOCK CONSISTENCY: Each |m| uses same Bessel J_m, same radial integral,
+               ! differs only by cos/sin angular factor. Do NOT change this ordering.
                w0(kz,ig,1)=fx5(kz)
                wadd(kz,ig)=fx6(kz)
                w0(kz,ig,2)=cs*fx3(kz)
@@ -231,6 +258,12 @@ implicit none
 
   enddo
 
+  ! NORMALIZATION AND PHASE FACTORS: Apply normalization constants (s1..s4) and
+  ! complex phase factors (cim = i) to complete the transformation.
+  ! Phase pattern: m=0→real, m=1→i, m=2→-1, m=3→-i (PWCOND gauge)
+  ! This differs from canonical (-i)^m pattern by global sign for odd m.
+  ! These phase factors come from the plane-wave expansion and must be
+  ! consistent with the UPF Ylm definitions (see copilot-instructions.md).
   if (lb.eq.0) then
      s1=tpi/sarea/sqrt(fpi)
   elseif (lb.eq.1) then
@@ -259,6 +292,9 @@ implicit none
         w0(kz,ig,3)=-2.d0*cim*s1*zsl(kz)*w0(kz,ig,3)
         w0(kz,ig,4)=s1*w0(kz,ig,4)
       elseif (lb.eq.3) then
+        ! f-orbitals final phase and normalization
+        ! Phase pattern: m=0→real (s4), m=1→+i (cim*s3), m=2→-1 (-s2), m=3→-i (-cim*s1)
+        ! Note: m=2,3 have negative signs, consistent with PWCOND gauge
         t1=w0(kz,ig,1);wa1=wadd(kz,ig)
         t2=w0(kz,ig,2);wa2=wadd2(kz,ig)
         t3=w0(kz,ig,3);wa3=wadd3(kz,ig)
