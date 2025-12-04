@@ -397,7 +397,7 @@ subroutine write_w0_debug(w0, lb, nz1, ngper)
   inquire(file='w0_debug.dat', exist=file_exists)
   
   ! Find free unit and open debug file for appending
-  call find_free_unit(debug_unit)
+  debug_unit = find_free_unit()
   if (debug_unit < 0) return  ! No free unit available
   
   if (file_exists) then

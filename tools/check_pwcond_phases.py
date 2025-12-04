@@ -54,10 +54,19 @@ REFERENCE_PHASES = EXPECTED_PHASES  # or PWCOND_GAUGE_PHASES
 
 def load_w0_debug_ascii(path: Path) -> np.ndarray:
     """
-    Example loader for a simple ASCII debug file written by four.f90.
+    Loader for ASCII debug file written by four.f90's write_w0_debug subroutine.
 
-    Expected format (you can adapt four.f90 accordingly):
+    Expected format:
+        # Header comments (automatically skipped by np.loadtxt)
+        # Block separator and metadata for each iteration
         kz ig m  Re(w0)  Im(w0)
+        ...
+        # Next block
+        kz ig m  Re(w0)  Im(w0)
+        ...
+
+    All data blocks are loaded together for aggregate phase analysis.
+    Indices (kz, ig, m) are zero-based for Python compatibility.
 
     Returns:
         w0[kz, ig, m] as a complex numpy array,
